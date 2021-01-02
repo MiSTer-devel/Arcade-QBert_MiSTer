@@ -297,12 +297,6 @@ wire HSync;
 wire VBlank;
 wire VSync;
 
-// wire test1 = joystick_0[4];
-// wire test2 = ~status[6];
-// wire p1, p2;
-// wire coin1, coin2;
-// wire down, up, right, left;
-
 wire [5:0] OP2720;
 wire [7:0] audio;
 
@@ -395,16 +389,8 @@ arcade_video #(256,24) arcade_video
 	.fx(status[17:15])
 );
 
-//assign CLK_VIDEO = clk_10;
 reg ce_pix;
 always @(posedge clk_10)
     ce_pix <= ~ce_pix;
-
-//assign CE_PIXEL = ce_pix;
-
-//assign VGA_DE = ~(HBlank | VBlank);
-//assign VGA_HS = HSync;
-//assign VGA_VS = VSync;
-
 
 endmodule
