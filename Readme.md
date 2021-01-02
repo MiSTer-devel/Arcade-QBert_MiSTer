@@ -1,8 +1,6 @@
-# Q*Bert ![QBert Character](./qbert.png) for MiSTer
+# ![QBert Character](./qbert.png) MiSTer Q*Bert
 
-QBert core for MiSTer.
-
-It's a copy of the original PCB with the following exceptions:
+Q*Bert arcade core for MiSTer FPGA. It's a reproduction of the original PCBs with the following exceptions:
 
 #### Main logic board:
 - I removed D2 to D4 multiplexers because FG POS/ID registers E1-2, E2-3 & E4 are now dual port RAM.
@@ -27,10 +25,10 @@ Bugs & WIP
 - Sound (WIP)
 - MRA file (WIP)
 - DIP switch order is not correct.
-- Screen rotation doesn't work and I don't know why ;(
-- Problem with horizontal position register E1-2. The bug is visible during a game when a new object is falling from the top of the screen (balls), they appear briefly at the bottom of the screen.
+- ~~Screen rotation doesn't work~~
+- Problem with horizontal position register E1-2. When a new object is falling from the top of the screen (ball), it appears briefly at the bottom of the screen.
 - Load/reset: loading the ROM doesn't reset the core properly, another manual reset is needed.
-- High Scores screen: the big three letters of player's name are not displayed correctly. It works well after a few resets.
+- High Scores screen: the big three letters of player's name are not displayed correctly. It works well after a few resets (it could be a problem with bus sharing logic which sends zeros to simulate high impedance and allow ORing outputs).
 - Votrax chip is cruelly missing, QBert needs his @!#?@! voice!!!
 - The left side of the screen shows a series of zero characters.
 

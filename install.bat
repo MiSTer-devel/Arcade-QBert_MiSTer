@@ -1,1 +1,1 @@
-%QUARTUS_ROOTDIR%\bin64\quartus_pgm -m JTAG -o p;output_files\qbert.sof@2
+%QUARTUS_ROOTDIR%\bin64\quartus_pgm -m JTAG -o p;output_files\Arcade-QBert.sof@2
