@@ -181,9 +181,11 @@ localparam CONF_STR = {
     "F1,bin,Rom Load;",
     "O5,Orientation,Vert,Horz;",
     "OFH,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
-    "O8,Aspect ratio,Original,Full Screen;",
+	 "H0O89,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
     "-;",
     "O6,Test mode,Off,On;",
+    "-;",
+    "DIP;",
     "-;",
     "P1-;",
     "P1,Dip Switch;",
@@ -193,6 +195,8 @@ localparam CONF_STR = {
     "P1OC,Normal/Free,Normal,Free;",
     "P1OD,Game Mode,Upright,Cocktail;",
     "P1OE,Kicker,Off,On;",
+    "J1,Service Select,Start 1P,Start 2P,Coin;",
+    "jn,A,Start,Select,R;",
     "-;",
     "T0,Reset;",
     "R0,Reset and close OSD;",
@@ -200,7 +204,7 @@ localparam CONF_STR = {
 };
 
 wire forced_scandoubler;
-// wire direct_video;
+wire direct_video;
 wire [21:0] gamma_bus;
 wire  [1:0] buttons;
 wire [31:0] status;
@@ -221,14 +225,14 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
     .HPS_BUS(HPS_BUS),
     .EXT_BUS(),
     .gamma_bus(gamma_bus),
-	// .direct_video(direct_video),
+	 .direct_video(direct_video),
 
     .conf_str(CONF_STR),
     .forced_scandoubler(forced_scandoubler),
 
     .buttons(buttons),
     .status(status),
-    // .status_menumask({direct_video}),
+    .status_menumask({direct_video}),
 
     .ps2_key(ps2_key),
 
@@ -257,7 +261,7 @@ pll pll
 (
     .refclk(CLK_50M),
     .rst(0),
-    .outclk_0(clk_sys),
+    .outclk_0(clk_sys), // 50Mhz
     .outclk_1(clk_100),
     .outclk_2(clk_40),
 	 .outclk_3(clk_10)
@@ -290,10 +294,15 @@ reg clk_5;
 always @(posedge clk_10)
 	clk_5 <= ~clk_5;
 
-wire ce_pix = clk_5;
 
 
 wire reset = RESET | status[0] | buttons[1];
+
+// read dip switches
+
+reg [7:0] sw[8];
+always @(posedge clk_sys) if (ioctl_wr && (ioctl_index==254) && !ioctl_addr[24:3]) sw[ioctl_addr[2:0]] <= ioctl_dout;
+
 
 //////////////////////////////////////////////////////////////////
 
@@ -314,10 +323,10 @@ wire [7:0] IP1710 = {
     joystick_0[4], // test 1
     ~status[6],    // test 2
     2'b0,
-    joystick_0[6], // coin 2
+    1'b0,//joystick_0[6], // coin 2
     joystick_0[7], // coin 1
-    joystick_0[5], // p2
-    joystick_0[4]  // p1
+    joystick_0[6], // p2
+    joystick_0[5]  // p1
 };
 
 wire [7:0] IP4740 = {
@@ -363,7 +372,7 @@ mylstar_board mylstar_board
         status[10]  // demo mode
     }),
 
-    .rom_init(ioctl_download),
+    .rom_init(ioctl_download && (ioctl_index==0)),
     .rom_init_address(ioctl_addr),
     .rom_init_data(ioctl_dout)
 );
@@ -375,7 +384,7 @@ ma216_board ma216_board(
     .reset(reset),
     .IP2720(OP2720),
     .audio(audio),
-    .rom_init(ioctl_download),
+    .rom_init(ioctl_download  && (ioctl_index==0)),
     .rom_init_address(ioctl_addr),
     .rom_init_data(ioctl_dout)
 );
@@ -393,6 +402,20 @@ arcade_video #(256,24) arcade_video
 	.RGB_in({ red, green, blue }),
 	.fx(status[17:15])
 );
+
+
+wire ce_pix = clk_5;
+
+
+// ce_pix signal is 1/8 of clk_sys
+/*
+reg ce_pix;
+always_ff @(posedge clk_40) begin
+  reg [2:0] div;
+  ce_pix <= !div;
+  div <= div + 'd1;
+end
+*/
 
 //reg ce_pix;
 //always @(posedge clk_10)

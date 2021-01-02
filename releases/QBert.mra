@@ -1,0 +1,33 @@
+
+<misterromdescription>
+	<name>Q*bert (US set 1)</name>
+	<mameversion>0198</mameversion>
+	<setname>qbert</setname>
+	<mratimestamp>20201231150731</mratimestamp>
+	<year>1982</year>
+	<manufacturer>Gottlieb</manufacturer>
+	<category>Platform</category>
+	<rbf>qbert</rbf>
+	<buttons names="Service Select,Start 1P,Start 2P,Coin" default="A,Start,Select,R"/>
+	<switches default="01">
+		<dip bits="0" name="Demo Sounds" ids="On,Off"></dip>
+		<dip bits="1" name="Kicker" ids="Off,On"></dip>
+		<dip bits="3" name="Cabinet" ids="Upright,Cocktail"></dip>
+		<dip bits="4" name="Demo Mode" ids="Off,On"></dip>
+		<dip bits="5" name="Free Play" ids="Off,On"></dip>
+	</switches>
+	<rom index="0" zip="qbert.zip" md5="none">
+		<part crc="7a9ba824" name="qb-bg0.bin"/>
+		<part crc="22e5b891" name="qb-bg1.bin"/>
+		<part crc="8e318641" name="qb-rom0.bin"/>
+		<part crc="55635447" name="qb-rom1.bin"/>
+		<part crc="fe434526" name="qb-rom2.bin"/>
+        <part repeat="16384">00</part>
+		<part crc="2f695b85" name="qb-fg0.bin"/>
+		<part crc="224e8356" name="qb-fg1.bin"/>
+		<part crc="f69b9483" name="qb-fg2.bin"/>
+		<part crc="dd436d3a" name="qb-fg3.bin"/>
+		<part crc="15787c07" name="qb-snd1.bin"/>
+		<part crc="58437508" name="qb-snd2.bin"/>
+	</rom>
+</misterromdescription>
