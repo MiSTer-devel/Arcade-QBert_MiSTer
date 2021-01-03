@@ -352,7 +352,7 @@ always @(*) begin
 			mod_mplanets:
 			begin
 				IP1710 <= {
-					 status[6],    // test 2
+					 ~status[6],    // test 2
 					 joystick_0[9], // test 1
 					 2'b0,
 					 1'b0,//joystick_0[6], // coin 2
