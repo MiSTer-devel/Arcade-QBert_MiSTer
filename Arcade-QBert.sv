@@ -303,6 +303,12 @@ wire reset = RESET | status[0] | buttons[1];
 reg [7:0] sw[8];
 always @(posedge clk_sys) if (ioctl_wr && (ioctl_index==254) && !ioctl_addr[24:3]) sw[ioctl_addr[2:0]] <= ioctl_dout;
 
+localparam mod_qbert  = 0;
+localparam mod_qub    = 1;
+
+
+reg [7:0] mod = 255;
+always @(posedge clk_sys) if (ioctl_wr & (ioctl_index==1)) mod <= ioctl_dout;
 
 //////////////////////////////////////////////////////////////////
 
@@ -343,7 +349,7 @@ mylstar_board mylstar_board
     .reset(reset),
 
     .CLK(clk_10),
-    .CLK5(clk_5),
+    .CLK5(ce_pix),
 
     .CPU_CORE_CLK(clk_100),
     .CPU_CLK(cpu_clk),
@@ -362,15 +368,7 @@ mylstar_board mylstar_board
     .OP2720(OP2720),
     .OP3337(),
 
-    .dip_switch({ // not sure, pls check
-        2'b0,
-        status[14], // kicker
-        1'b0,
-        status[13], // game mode
-        status[12], // normal/free
-        status[11], // sound
-        status[10]  // demo mode
-    }),
+    .dip_switch(sw[0]),
 
     .rom_init(ioctl_download && (ioctl_index==0)),
     .rom_init_address(ioctl_addr),
