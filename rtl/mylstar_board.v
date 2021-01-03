@@ -18,11 +18,6 @@ module mylstar_board
   output  [7:0] green,
   output  [7:0] blue,
 
-  // input         test1, test2,
-  // input         p1, p2,
-  // input         coin1, coin2,
-  // input         down, up, right, left,
-
   input   [7:0] IP1710,
   input   [7:0] IP4740,
   output  [5:0] OP2720,
@@ -112,9 +107,6 @@ wire [7:0] VV = { D15_8, D15_6, D15_3, D15_11, E15_8, E15_6, E15_11, E15_3 };
 wire nHH0s = F15_12;
 wire nH0 = F15_4;
 wire nVV0 = K15_10;
-
-// wire [7:0] P1_B11 = { test1, test2, 2'b0, coin2, coin1, p2, p1  };
-// wire [7:0] P1_B14 = { 4'b0, left, right, up, down };
 
 wire [7:0] P1_B11 = IP1710;
 wire [7:0] P1_B14 = IP4740;
@@ -333,7 +325,6 @@ x74139 D1(
 );
 
 // D3 & D4 removed because of DPRAM E1_2 to E4
-
 // D5 to D10 mux removed because of DPRAM (E7 & E10_11)
 
 x74374 D11(

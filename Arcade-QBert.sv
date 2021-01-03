@@ -256,15 +256,15 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 // XTAL = 15M
 // CPU_CLK from 8284 = 5M
 
-wire clk_sys, clk_100, clk_40, clk_10;
+wire clk_sys, clk_100, clk_40;
 pll pll
 (
     .refclk(CLK_50M),
     .rst(0),
     .outclk_0(clk_sys), // 50Mhz
     .outclk_1(clk_100),
-    .outclk_2(clk_40),
-	 .outclk_3(clk_10)
+    .outclk_2(clk_40)
+//	 .outclk_3(clk_10) // todo: update pll
 );
 
 reg [3:0] cnt1;
@@ -284,16 +284,21 @@ reg clk_2;
 always @(posedge clk_sys) begin
     cnt2 <= cnt2 + 6'd1;
 	 clk_2 <= 1'b0;
-    if (cnt2 == 6'd33) begin
+    if (cnt2 == 6'd40) begin
         cnt2 <= 6'd0;
         clk_2 <= 1'b1;
     end
 end
 
+reg [1:0] cnt3;
+always @(posedge clk_40)
+  cnt3 <= cnt3 + 2'd1;
+
+wire clk_10 = cnt3[1];
+  
 reg clk_5;
 always @(posedge clk_10)
 	clk_5 <= ~clk_5;
-
 
 
 wire reset = RESET | status[0] | buttons[1];

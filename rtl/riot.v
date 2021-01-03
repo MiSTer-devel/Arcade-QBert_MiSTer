@@ -37,6 +37,7 @@ reg PA7CLEARDONE;
 reg TIMERCLEARNEED;
 reg TIMERCLEARDONE;
 reg [18:0] COUNTER;
+reg PA7;
 
 integer i;
 
@@ -88,7 +89,7 @@ always @(negedge PHI2) begin
 
   // the following was negedge PHI2 in original file
 
-  if (EDGEDETECT == PA_I[7]) PA7FLAG <= 1'b1;
+  if (EDGEDETECT == PA_I[7] && PA7 != PA_I[7]) PA7FLAG <= 1'b1;
 
   if (COUNTER[18]) begin
     PERIOD <= TIM1T;
@@ -184,6 +185,7 @@ always @(negedge PHI2) begin
 
   DDRA_O <= DDRA;
   DDRB_O <= DDRB;
+  PA7 <= PA_I[7];
 
 end
 
