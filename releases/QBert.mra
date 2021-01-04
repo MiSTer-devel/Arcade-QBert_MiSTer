@@ -16,9 +16,6 @@
 		<dip bits="4" name="Demo Mode" ids="Off,On"></dip>
 		<dip bits="5" name="Free Play" ids="Off,On"></dip>
 	</switches>
-	<rom index="1">
-		<part>0</part>
-	</rom>
 	<rom index="0" zip="qbert.zip" md5="none">
 		<part crc="7a9ba824" name="qb-bg0.bin"/>
 		<part crc="22e5b891" name="qb-bg1.bin"/>
@@ -27,12 +24,8 @@
 		<part crc="fe434526" name="qb-rom2.bin"/>
         <part repeat="16384">00</part>
 		<part crc="2f695b85" name="qb-fg0.bin"/>
-		<part crc="2f695b85" name="qb-fg0.bin"/>
-		<part crc="224e8356" name="qb-fg1.bin"/>
 		<part crc="224e8356" name="qb-fg1.bin"/>
 		<part crc="f69b9483" name="qb-fg2.bin"/>
-		<part crc="f69b9483" name="qb-fg2.bin"/>
-		<part crc="dd436d3a" name="qb-fg3.bin"/>
 		<part crc="dd436d3a" name="qb-fg3.bin"/>
 		<part crc="15787c07" name="qb-snd1.bin"/>
 		<part crc="58437508" name="qb-snd2.bin"/>

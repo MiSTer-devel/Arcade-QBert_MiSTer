@@ -60,7 +60,7 @@ dpram #(.addr_width(11),.data_width(8)) U5 (
   .dout(U5_dout),
   .ce(U4_O[7]),
   .oe(AB[11]),
-  .we(rom_init & rom_init_address < 18'h1C800),
+  .we(rom_init & rom_init_address < 18'h14800),
   .waddr(rom_init_address),
   .wdata(rom_init_data)
 );
@@ -71,7 +71,7 @@ dpram #(.addr_width(11),.data_width(8)) U6 (
   .dout(U6_dout),
   .ce(U4_O[7]),
   .oe(~AB[11]),
-  .we(rom_init & rom_init_address < 18'h1D000),
+  .we(rom_init & rom_init_address < 18'h15000),
   .waddr(rom_init_address),
   .wdata(rom_init_data)
 );

@@ -176,31 +176,28 @@ assign VIDEO_ARY = (!ar) ? 12'd3 : 12'd0;
 
 `include "build_id.v"
 localparam CONF_STR = {
-    "QBert;;",
-    "-;",
-    "F1,bin,Rom Load;",
-    "O5,Orientation,Vert,Horz;",
-    "OFH,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
-	 "H0O89,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
-    "-;",
-    "O6,Test mode,Off,On;",
-    "-;",
-    "DIP;",
-    "-;",
-    "P1-;",
-    "P1,Dip Switch;",
-    "P1-;",
-    "P1OA,Demo Mode,Normal,Infinite Lives;",
-    "P1OB,Attract Play,Sound,No Sound;",
-    "P1OC,Normal/Free,Normal,Free;",
-    "P1OD,Game Mode,Upright,Cocktail;",
-    "P1OE,Kicker,Off,On;",
-    "J1,Service Select,Start 1P,Start 2P,Coin;",
-    "jn,A,Start,Select,R;",
-    "-;",
-    "T0,Reset;",
-    "R0,Reset and close OSD;",
-    "V,v",`BUILD_DATE
+  "QBert;;",
+  "-;",
+  "F1,bin,Rom Load;",
+  "O5,Orientation,Vert,Horz;",
+  "OFH,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
+  "H0O89,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
+  "-;",
+  "O6,Test mode,Off,On;",
+  "-;",
+  "P1-,DIP;",
+  "P1-;",
+  "P1OA,Demo Mode,Normal,Infinite Lives;",
+  "P1OB,Attract Play,Sound,No Sound;",
+  "P1OC,Normal/Free,Normal,Free;",
+  "P1OD,Game Mode,Upright,Cocktail;",
+  "P1OE,Kicker,Off,On;",
+  "J1,Service Select,Start 1P,Start 2P,Coin;",
+  "jn,A,Start,Select,R;",
+  "-;",
+  "T0,Reset;",
+  "R0,Reset and close OSD;",
+  "V,v",`BUILD_DATE
 };
 
 wire forced_scandoubler;
@@ -221,29 +218,29 @@ wire [15:0] joystick_0;
 
 hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 (
-    .clk_sys(clk_sys),
-    .HPS_BUS(HPS_BUS),
-    .EXT_BUS(),
-    .gamma_bus(gamma_bus),
-	 .direct_video(direct_video),
+  .clk_sys(clk_sys),
+  .HPS_BUS(HPS_BUS),
+  .EXT_BUS(),
+  .gamma_bus(gamma_bus),
+  .direct_video(direct_video),
 
-    .conf_str(CONF_STR),
-    .forced_scandoubler(forced_scandoubler),
+  .conf_str(CONF_STR),
+  .forced_scandoubler(forced_scandoubler),
 
-    .buttons(buttons),
-    .status(status),
-    .status_menumask({direct_video}),
+  .buttons(buttons),
+  .status(status),
+  .status_menumask({direct_video}),
 
-    .ps2_key(ps2_key),
+  .ps2_key(ps2_key),
 
-    .ioctl_download(ioctl_download),
-    .ioctl_wr(ioctl_wr),
-    .ioctl_addr(ioctl_addr),
-    .ioctl_dout(ioctl_dout),
-    .ioctl_wait(ioctl_wait),
-    .ioctl_index(ioctl_index),
+  .ioctl_download(ioctl_download),
+  .ioctl_wr(ioctl_wr),
+  .ioctl_addr(ioctl_addr),
+  .ioctl_dout(ioctl_dout),
+  .ioctl_wait(ioctl_wait),
+  .ioctl_index(ioctl_index),
 
-    .joystick_0(joystick_0)
+  .joystick_0(joystick_0)
 );
 
 ///////////////////////   CLOCKS   ///////////////////////////////
@@ -262,7 +259,7 @@ pll pll
     .refclk(CLK_50M),
     .rst(0),
     .outclk_0(clk_sys), // 50Mhz
-    .outclk_1(clk_100),
+    .outclk_1(clk_50),
     .outclk_2(clk_40)
 //	 .outclk_3(clk_10) // todo: update pll
 );
@@ -282,12 +279,12 @@ end
 reg [5:0] cnt2;
 reg clk_2;
 always @(posedge clk_sys) begin
-    cnt2 <= cnt2 + 6'd1;
-	 clk_2 <= 1'b0;
-    if (cnt2 == 6'd40) begin
-        cnt2 <= 6'd0;
-        clk_2 <= 1'b1;
-    end
+  cnt2 <= cnt2 + 6'd1;
+  clk_2 <= 1'b0;
+  if (cnt2 == 6'd45) begin
+    cnt2 <= 6'd0;
+    clk_2 <= 1'b1;
+  end
 end
 
 reg [1:0] cnt3;
@@ -295,118 +292,20 @@ always @(posedge clk_40)
   cnt3 <= cnt3 + 2'd1;
 
 wire clk_10 = cnt3[1];
-  
+
 reg clk_5;
 always @(posedge clk_10)
-	clk_5 <= ~clk_5;
+  clk_5 <= ~clk_5;
 
 
 wire reset = RESET | status[0] | buttons[1];
+
+//////////////////////////////////////////////////////////////////
 
 // read dip switches
 
 reg [7:0] sw[8];
 always @(posedge clk_sys) if (ioctl_wr && (ioctl_index==254) && !ioctl_addr[24:3]) sw[ioctl_addr[2:0]] <= ioctl_dout;
-
-localparam mod_qbert  		= 0;
-localparam mod_qub    		= 1;
-localparam mod_mplanets    = 2;
-localparam mod_krull    = 3;
-localparam mod_curvebal = 4;
-
-reg [7:0] mod = 255;
-always @(posedge clk_sys) if (ioctl_wr & (ioctl_index==1)) mod <= ioctl_dout;
-
-
-wire [7:0] IP1710;
-wire [7:0] IP4740;
-
-
-always @(*) begin
-
-	IP1710 <= {
-		 joystick_0[4], // test 1
-		 ~status[6],    // test 2
-		 2'b0,
-		 1'b0,//joystick_0[6], // coin 2
-		 joystick_0[7], // coin 1
-		 joystick_0[6], // p2
-		 joystick_0[5]  // p1
-	};
-
-	IP4740 <= {
-		 4'b0,
-		 joystick_0[2], // left
-		 joystick_0[3], // right
-		 joystick_0[1], // up
-		 joystick_0[0]  // down
-	};
-
-   case (mod)   
-			mod_qbert:
-			begin
-			end
-			mod_qub:
-			begin
-			end
-			mod_mplanets:
-			begin
-				IP1710 <= {
-					 ~status[6],    // test 2
-					 joystick_0[9], // test 1
-					 2'b0,
-					 1'b0,//joystick_0[6], // coin 2
-					 1'b0, // coin 1
-					 1'b0, // p2
-					 joystick_0[7]  // coin
-				};
-
-				IP4740 <= {
-					joystick_0[8],// button 2
-
-					joystick_0[6], // p2
-					 joystick_0[5],  // p1
-
-					 joystick_0[4], // button 1
-					 joystick_0[2], // left
-					 joystick_0[3], // right
-					 joystick_0[1], // up
-					 joystick_0[0]  // down
-				};			
-			end
-			mod_krull:
-			begin
-			mod_curvebal:
-			begin
-				IP1710 <= {
-					 2'b0,
-					 1'b0, // p2
-					 1'b0,//joystick_0[6], 
-					 1'b0,// coin 2
-					 joystick_0[7], // coin 1
-					 joystick_0[8], // test 1
-					 ~status[6],    // test 2
-				};
-
-				IP4740 <= {
-					1'b0, // n/a
-					joystick_0[9], // bunt
-					1'b0, // n/a
-					 joystick_0[11], // pitch right
-					 1'b0, // n/a
-					 joystick_0[10], // pitch left
-					 joystick_0[4], // swing
-					 1'b0  
-				};	
-			end
-			end
-			default:
-			begin
-			end
-		 endcase
-end	
-
-//////////////////////////////////////////////////////////////////
 
 wire HBlank;
 wire HSync;
@@ -414,59 +313,75 @@ wire VBlank;
 wire VSync;
 
 wire [5:0] OP2720;
-wire [7:0] audio;
 
+wire [7:0] IP1710 = {
+  joystick_0[4], // test 1
+  ~status[6],    // test 2
+  2'b0,
+  joystick_0[8], // coin 2
+  joystick_0[9], // coin 1
+  joystick_0[10], // p2
+  joystick_0[7]  // p1
+};
+
+wire [7:0] IP4740 = {
+  4'b0,
+  joystick_0[2], // left
+  joystick_0[3], // right
+  joystick_0[1], // up
+  joystick_0[0]  // down
+};
+
+wire [7:0] audio;
 wire [7:0] red, green, blue;
 
 assign AUDIO_L = { audio, 8'd0 };
 assign AUDIO_R = { audio, 8'd0 };
 
-
+wire rom_init = ioctl_download && (ioctl_index==0);
 
 mylstar_board mylstar_board
 (
-    .clk_sys(clk_sys),
-    .reset(reset),
+  .clk_sys(clk_sys),
+  .reset(reset),
 
-    .CLK(clk_10),
-    .CLK5(ce_pix),
+  .CLK(clk_10),
+  .CLK5(clk_5),
 
-    .CPU_CORE_CLK(clk_100),
-    .CPU_CLK(cpu_clk),
+  .CPU_CORE_CLK(clk_sys),
+  .CPU_CLK(cpu_clk),
 
-    .HBlank(HBlank),
-    .HSync(HSync),
-    .VBlank(VBlank),
-    .VSync(VSync),
+  .HBlank(HBlank),
+  .HSync(HSync),
+  .VBlank(VBlank),
+  .VSync(VSync),
 
-    .red(red),
-    .green(green),
-    .blue(blue),
+  .red(red),
+  .green(green),
+  .blue(blue),
 
-    .IP1710(IP1710),
-    .IP4740(IP4740),
-    .OP2720(OP2720),
-    .OP3337(),
+  .IP1710(IP1710),
+  .IP4740(IP4740),
+  .OP2720(OP2720),
+  .OP3337(),
 
-    .dip_switch(sw[0]),
+  .dip_switch(sw[0]),
 
-	 .mod_qbert(mod==mod_qbert || mod==mod_mplanets || mod==mod_curvebal),
-	 
-    .rom_init(ioctl_download && (ioctl_index==0)),
-    .rom_init_address(ioctl_addr),
-    .rom_init_data(ioctl_dout)
+  .rom_init(rom_init),
+  .rom_init_address(ioctl_addr),
+  .rom_init_data(ioctl_dout)
 );
 
 // audio board
 ma216_board ma216_board(
-    .clk(clk_2),
-    .clk_sys(clk_sys),
-    .reset(reset),
-    .IP2720(OP2720),
-    .audio(audio),
-    .rom_init(ioctl_download  && (ioctl_index==0)),
-    .rom_init_address(ioctl_addr),
-    .rom_init_data(ioctl_dout)
+  .clk(clk_2),
+  .clk_sys(clk_sys),
+  .reset(reset),
+  .IP2720(OP2720),
+  .audio(audio),
+  .rom_init(rom_init),
+  .rom_init_address(ioctl_addr),
+  .rom_init_data(ioctl_dout)
 );
 
 // 256x240 15KHz 60Hz
@@ -477,28 +392,12 @@ screen_rotate screen_rotate (.*);
 
 arcade_video #(256,24) arcade_video
 (
-	.*,
-	.clk_video(clk_40),
-	.RGB_in({ red, green, blue }),
-	.fx(status[17:15])
+  .*,
+  .clk_video(clk_40),
+  .RGB_in({ red, green, blue }),
+  .fx(status[17:15])
 );
 
-
 wire ce_pix = clk_5;
-
-
-// ce_pix signal is 1/8 of clk_sys
-/*
-reg ce_pix;
-always_ff @(posedge clk_40) begin
-  reg [2:0] div;
-  ce_pix <= !div;
-  div <= div + 'd1;
-end
-*/
-
-//reg ce_pix;
-//always @(posedge clk_10)
-//    ce_pix <= ~ce_pix;
 
 endmodule
