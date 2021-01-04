@@ -2,7 +2,7 @@
 <misterromdescription>
 	<name>Mad Planets</name>
 	<mameversion>0198</mameversion>
-	<setname>qbert</setname>
+	<setname>mplanets</setname>
 	<mratimestamp>20201231150731</mratimestamp>
 	<year>1982</year>
 	<manufacturer>Gottlieb</manufacturer>
@@ -11,10 +11,10 @@
 	<buttons names="Button 1,Start 1P,Start 2P,Coin,Button 2,Service Select" default="A,Start,Select,R,B,L"/>
 	<switches default="01">
 		<dip bits="0" name="Demo Sounds" ids="On,Off"></dip>
-		<dip bits="1" name="Kicker" ids="Off,On"></dip>
-		<dip bits="3" name="Cabinet" ids="Upright,Cocktail"></dip>
-		<dip bits="4" name="Demo Mode" ids="Off,On"></dip>
-		<dip bits="5" name="Free Play" ids="Off,On"></dip>
+		<dip bits="1" name="Bonus Life" ids="Every 10000,Every 12000"></dip>
+		<dip bits="3" name="Allow Round Select" ids="No,Yes"></dip>
+		<dip bits="5" name="Lives" ids="3,5"></dip>
+		<dip bits="6,7" name="Difficulty" ids="Standard,Easy,Hard,Very Hard"></dip>
 	</switches>
 	<rom index="1">
 		<part>2</part>

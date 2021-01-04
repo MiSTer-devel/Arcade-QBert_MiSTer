@@ -2,7 +2,7 @@
 <misterromdescription>
 	<name>Tylz</name>
 	<mameversion>0198</mameversion>
-	<setname>qbert</setname>
+	<setname>tylz</setname>
 	<mratimestamp>20201231150731</mratimestamp>
 	<year>1982</year>
 	<manufacturer>Gottlieb</manufacturer>
@@ -10,14 +10,11 @@
 	<rbf>qbert</rbf>
 	<buttons names="Service Select,Start 1P,Start 2P,Coin" default="A,Start,Select,R"/>
 	<switches default="01">
-		<dip bits="0" name="Demo Sounds" ids="On,Off"></dip>
-		<dip bits="1" name="Kicker" ids="Off,On"></dip>
-		<dip bits="3" name="Cabinet" ids="Upright,Cocktail"></dip>
-		<dip bits="4" name="Demo Mode" ids="Off,On"></dip>
-		<dip bits="5" name="Free Play" ids="Off,On"></dip>
+		<dip bits="4" name="Demo Sounds" ids="On,Off"></dip>
+		<dip bits="3" name="Lives" ids="3,5"></dip>
 	</switches>
 	<rom index="1">
-		<part>0</part>
+		<part>5</part>
 	</rom>
 	<rom index="0" zip="tylz.zip" md5="none">
 		<part crc="5e300b9b" name="tylz.m6"/>

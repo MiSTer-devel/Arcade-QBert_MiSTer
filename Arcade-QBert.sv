@@ -178,25 +178,18 @@ assign VIDEO_ARY = (!ar) ? 12'd3 : 12'd0;
 localparam CONF_STR = {
   "QBert;;",
   "-;",
-  "F1,bin,Rom Load;",
+  "F0,bin,Rom Load;",
   "O5,Orientation,Vert,Horz;",
   "OFH,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
   "H0O89,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
   "-;",
   "O6,Test mode,Off,On;",
   "-;",
-  "P1-,DIP;",
-  "P1-;",
-  "P1OA,Demo Mode,Normal,Infinite Lives;",
-  "P1OB,Attract Play,Sound,No Sound;",
-  "P1OC,Normal/Free,Normal,Free;",
-  "P1OD,Game Mode,Upright,Cocktail;",
-  "P1OE,Kicker,Off,On;",
+  "DIP;",
+  "-;",
+  "R0,Reset and close OSD;",
   "J1,Service Select,Start 1P,Start 2P,Coin;",
   "jn,A,Start,Select,R;",
-  "-;",
-  "T0,Reset;",
-  "R0,Reset and close OSD;",
   "V,v",`BUILD_DATE
 };
 
@@ -314,23 +307,126 @@ wire VSync;
 
 wire [5:0] OP2720;
 
-wire [7:0] IP1710 = {
-  joystick_0[4], // test 1
-  ~status[6],    // test 2
-  2'b0,
-  joystick_0[8], // coin 2
-  joystick_0[9], // coin 1
-  joystick_0[10], // p2
-  joystick_0[7]  // p1
-};
+localparam mod_qbert  		= 0;
+localparam mod_qub    		= 1;
+localparam mod_mplanets    = 2;
+localparam mod_krull    = 3;
+localparam mod_curvebal = 4;
+localparam mod_tylz = 5;
 
-wire [7:0] IP4740 = {
-  4'b0,
-  joystick_0[2], // left
-  joystick_0[3], // right
-  joystick_0[1], // up
-  joystick_0[0]  // down
-};
+reg [7:0] mod = 255;
+always @(posedge clk_sys) if (ioctl_wr & (ioctl_index==1)) mod <= ioctl_dout;
+
+
+wire [7:0] IP1710;
+wire [7:0] IP4740;
+
+
+always @(*) begin
+
+	IP1710 <= {
+		 joystick_0[4], // test 1
+		 ~status[6],    // test 2
+		 2'b0,
+		 joystick_0[7], // coin 1
+		 1'b0,//joystick_0[6], // coin 2
+		 joystick_0[6], // p2
+		 joystick_0[5]  // p1
+	};
+
+	IP4740 <= {
+		 4'b0,
+		 joystick_0[2], // left
+		 joystick_0[3], // right
+		 joystick_0[1], // up
+		 joystick_0[0]  // down
+	};
+
+   case (mod)   
+			mod_qbert:
+			begin
+			end
+			mod_qub:
+			begin
+			end
+			mod_mplanets:
+			begin
+				IP1710 <= {
+					 ~status[6],    // test 2
+					 joystick_0[9], // test 1
+					 2'b0,
+					 1'b0,
+					 1'b0, // coin 1
+					 1'b0, // coin 2
+					 joystick_0[7]  // coin
+				};
+
+				IP4740 <= {
+					joystick_0[8],// button 2
+
+					joystick_0[6], // p2
+					 joystick_0[5],  // p1
+
+					 joystick_0[4], // button 1
+					 joystick_0[2], // left
+					 joystick_0[0],  // down
+					 joystick_0[3], // right
+					 joystick_0[1] // up
+				};			
+			end
+			mod_krull:
+			begin
+			end
+			mod_curvebal:
+			begin
+				IP1710 <= {
+					 2'b0,
+					 1'b0, // p2
+					 1'b0,//joystick_0[6], 
+					 1'b0,// coin 2
+					 joystick_0[7], // coin 1
+					 joystick_0[8], // test 1
+					 ~status[6],    // test 2
+				};
+
+				IP4740 <= {
+					1'b0, // n/a
+					joystick_0[9], // bunt
+					1'b0, // n/a
+					 joystick_0[11], // pitch right
+					 1'b0, // n/a
+					 joystick_0[10], // pitch left
+					 joystick_0[4], // swing
+					 1'b0  
+				};	
+			end
+			mod_tylz:
+			begin
+				IP1710 <= { // IN1
+					 4'b0,
+					 joystick_0[7], // coin 1
+					 1'b0,//joystick_0[6], // coin 2
+					 joystick_0[4], // test 1
+					 ~status[6]
+				};
+
+				IP4740 <= { // IN4
+					 1'b0,
+ 					joystick_0[6], // p2
+					 joystick_0[5],  // p1
+
+					 joystick_0[4], // button 1
+					 joystick_0[2], // left
+					 joystick_0[1], // up
+					 joystick_0[3], // right
+					 joystick_0[0]  // down
+				};
+			end
+			default:
+			begin
+			end
+		 endcase
+end	
 
 wire [7:0] audio;
 wire [7:0] red, green, blue;
@@ -387,7 +483,7 @@ ma216_board ma216_board(
 // 256x240 15KHz 60Hz
 
 wire rotate_ccw = 1'b1;
-wire no_rotate = status[5];
+wire no_rotate = status[5] | (mod==mod_tylz);
 screen_rotate screen_rotate (.*);
 
 arcade_video #(256,24) arcade_video

@@ -959,21 +959,11 @@ x74379 K3(
 );
 //00000000 1100 0000 0000 0000
 // K4,K5,K6,K7_8 addr_width(14), bit13 = BANK_SEL - fix me!
-dpram #(.addr_width(13),.data_width(8)) K4(
+wire bit13 =  BANK_SEL;
+dpram #(.addr_width(14),.data_width(8)) K4(
   .clk(clk_sys),
-  .addr(RA),
+  .addr({bit13,RA}),
   .dout(K4_D),
-  .ce(1'b0),
-  .oe(1'b0),
-  .we(rom_init && rom_init_address < 18'he000),
-  .waddr(rom_init_address),
-  .wdata(rom_init_data)
-);
-
-dpram #(.addr_width(13),.data_width(8)) K5(
-  .clk(clk_sys),
-  .addr(RA),
-  .dout(K5_D),
   .ce(1'b0),
   .oe(1'b0),
   .we(rom_init && rom_init_address < 18'h10000),
@@ -981,24 +971,35 @@ dpram #(.addr_width(13),.data_width(8)) K5(
   .wdata(rom_init_data)
 );
 
-dpram #(.addr_width(13),.data_width(8)) K6(
+dpram #(.addr_width(14),.data_width(8)) K5(
   .clk(clk_sys),
-  .addr(RA),
-  .dout(K6_D),
+  .addr({bit13,RA}),
+  .dout(K5_D),
   .ce(1'b0),
   .oe(1'b0),
-  .we(rom_init && rom_init_address < 18'h12000),
+  .we(rom_init && rom_init_address < 18'h14000),
   .waddr(rom_init_address),
   .wdata(rom_init_data)
 );
 
-dpram #(.addr_width(13),.data_width(8)) K7_8(
+dpram #(.addr_width(14),.data_width(8)) K6(
   .clk(clk_sys),
-  .addr(RA),
+  .addr({bit13,RA}),
+  .dout(K6_D),
+  .ce(1'b0),
+  .oe(1'b0),
+  .we(rom_init && rom_init_address < 18'h18000),
+  .waddr(rom_init_address),
+  .wdata(rom_init_data)
+);
+
+dpram #(.addr_width(14),.data_width(8)) K7_8(
+  .clk(clk_sys),
+  .addr({bit13,RA}),
   .dout(K7_8_D),
   .ce(1'b0),
   .oe(1'b0),
-  .we(rom_init & rom_init_address < 18'h14000),
+  .we(rom_init & rom_init_address < 18'h1C000),
   .waddr(rom_init_address),
   .wdata(rom_init_data)
 );

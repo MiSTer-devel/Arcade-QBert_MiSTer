@@ -2,7 +2,7 @@
 <misterromdescription>
 	<name>Insector</name>
 	<mameversion>0198</mameversion>
-	<setname>qbert</setname>
+	<setname>insector</setname>
 	<mratimestamp>20201231150731</mratimestamp>
 	<year>1982</year>
 	<manufacturer>Gottlieb</manufacturer>
@@ -10,11 +10,12 @@
 	<rbf>qbert</rbf>
 	<buttons names="Service Select,Start 1P,Start 2P,Coin" default="A,Start,Select,R"/>
 	<switches default="01">
-		<dip bits="0" name="Demo Sounds" ids="On,Off"></dip>
-		<dip bits="1" name="Kicker" ids="Off,On"></dip>
-		<dip bits="3" name="Cabinet" ids="Upright,Cocktail"></dip>
-		<dip bits="4" name="Demo Mode" ids="Off,On"></dip>
+		<dip bits="0" name="Bonus Life" ids="25k 75k every 50k,20k 90k every 60k"></dip>
+		<dip bits="1" name="Demo Sounds" ids="Off,On"></dip>
+		<dip bits="2" name="Demo Mode" ids="On,Off"></dip>
+		<dip bits="3" name="Lives" ids="5,3"></dip>
 		<dip bits="5" name="Free Play" ids="Off,On"></dip>
+	    <dip bits="7" name="Cabinet" ids="Upright,Cocktail"></dip>
 	</switches>
 	<rom index="1">
 		<part>0</part>

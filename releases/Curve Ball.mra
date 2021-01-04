@@ -2,7 +2,7 @@
 <misterromdescription>
 	<name>Curve Ball</name>
 	<mameversion>0198</mameversion>
-	<setname>qbert</setname>
+	<setname>curvebal</setname>
 	<mratimestamp>20201231150731</mratimestamp>
 	<year>1982</year>
 	<manufacturer>Gottlieb</manufacturer>
@@ -10,11 +10,9 @@
 	<rbf>qbert</rbf>
 	<buttons names="Swing,Start 1P,Start 2P,Coin,Service Select,Bunt,Pitch Left,Pitch Right" default="A,Start,Select,R,L,X,B,Y"/>
 	<switches default="01">
-		<dip bits="0" name="Demo Sounds" ids="On,Off"></dip>
-		<dip bits="1" name="Kicker" ids="Off,On"></dip>
-		<dip bits="3" name="Cabinet" ids="Upright,Cocktail"></dip>
-		<dip bits="4" name="Demo Mode" ids="Off,On"></dip>
-		<dip bits="5" name="Free Play" ids="Off,On"></dip>
+		<dip bits="4" name="2 player game" ids="2 credits,1 credit"></dip>
+		<dip bits="5,6" name="Difficulty" ids="Easy,Hard,Medium,Vey Hard"></dip>
+		<dip bits="3" name="Demo Sounds" ids="Off,On"></dip>
 	</switches>
 	<rom index="1">
 		<part>4</part>

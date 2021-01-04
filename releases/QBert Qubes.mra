@@ -2,7 +2,7 @@
 <misterromdescription>
 	<name>Q*bert Qubes</name>
 	<mameversion>0198</mameversion>
-	<setname>qbert</setname>
+	<setname>qbertqub</setname>
 	<mratimestamp>20201231150731</mratimestamp>
 	<year>1982</year>
 	<manufacturer>Gottlieb</manufacturer>
@@ -26,7 +26,7 @@
 		<part crc="63e6c43d" name="qq-rom1.bin"/>
 		<part crc="21a6c6cc" name="qq-rom2.bin"/>
 		<part crc="c4dbdcd7" name="qq-rom3.bin"/>
-        <part repeat="8096">00</part>
+        <part repeat="8192">00</part>
 		<part crc="6192853f" name="qq-fg0.bin"/>
 		<part crc="71c3ac4c" name="qq-fg1.bin"/>
 		<part crc="782d9431" name="qq-fg2.bin"/>
