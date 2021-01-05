@@ -26,3 +26,4 @@ set_global_assignment -name VERILOG_FILE rtl/7400/x74157.v
 set_global_assignment -name VERILOG_FILE rtl/7400/x74139.v
 set_global_assignment -name VERILOG_FILE rtl/7400/x74138.v
 set_global_assignment -name VERILOG_FILE rtl/7400/x7474.v
+set_global_assignment -name VERILOG_FILE rtl/sc01.v

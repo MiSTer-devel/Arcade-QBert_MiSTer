@@ -17,7 +17,7 @@ assign audio = U7_8;
 
 wire [15:0] AB;
 wire [7:0] DBo;
-wire WE, irq;
+wire WE, irq, U14_AR;
 wire [7:0] U4_O, U5_dout, U6_dout;
 wire [7:0] U15_D_O;
 reg [7:0] SB1, U11_18, U7_8;
@@ -28,12 +28,6 @@ reg [7:0] DBi;
 always @(posedge clk)
   DBi <= ~U4_O[0] ? U15_D_O : U5_dout | U6_dout;
 
-always @(posedge clk)
-  if (~U4_O[3]) U11_18 <= DBo;
-
-always @(posedge clk)
-  if (~U4_O[1]) U7_8 <= DBo;
-
 cpu6502 U3(
   .clk(clk),
   .reset(reset),
@@ -42,7 +36,7 @@ cpu6502 U3(
   .DO(DBo),
   .WE(WE),
   .IRQ(~irq),
-  .NMI(),
+  .NMI(~U14_AR),
   .RDY(1'b1)
 );
 
@@ -76,6 +70,27 @@ dpram #(.addr_width(11),.data_width(8)) U6 (
   .wdata(rom_init_data)
 );
 
+// U7 U8
+always @(posedge clk)
+  if (~U4_O[1]) U7_8 <= DBo;
+
+// U11 U18
+always @(posedge clk)
+  if (~U4_O[3]) U11_18 <= DBo;
+
+reg votrax_clk; // todo: create 720KHz clock
+always @(posedge clk)
+  votrax_clk <= ~votrax_clk;
+
+sc01 U14(
+  .clk(votrax_clk), // 720KHz?
+  .PhCde(~DBo[5:0]),
+  .Pitch(),
+  .LatchCde(U4_O[2]),
+  .audio(),
+  .AR(U14_AR)
+);
+
 riot U15(
   .PHI2(clk),
   .RES_N(~reset),
@@ -89,7 +104,7 @@ riot U15(
   .PA_I({ &IP2720[3:0], 1'b0, ~IP2720 }),
   .PA_O(),
   .DDRA_O(),
-  .PB_I({ 2'b11, ~SB1[5:0] }),
+  .PB_I({ U14_AR, 1'b1, ~SB1[5:0] }),
   .PB_O(),
   .DDRB_O(),
   .IRQ_N(irq)
