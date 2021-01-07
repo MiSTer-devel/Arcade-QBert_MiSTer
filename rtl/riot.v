@@ -73,7 +73,7 @@ always @(negedge PHI2) begin
             end
           end
           else begin
-            D_O <= { TIMERFLAG, PA7FLAG, 5'd0 };
+            D_O <= { TIMERFLAG, PA7FLAG, 6'd0 };
             PA7CLEARNEED <= ~PA7CLEARNEED;
           end
         end
