@@ -12,9 +12,9 @@
 	<switches default="01">
 		<dip bits="0" name="Demo Sounds" ids="On,Off"></dip>
 		<dip bits="1" name="Kicker" ids="Off,On"></dip>
-		<dip bits="3" name="Cabinet" ids="Upright,Cocktail"></dip>
-		<dip bits="4" name="Demo Mode" ids="Off,On"></dip>
-		<dip bits="5" name="Free Play" ids="Off,On"></dip>
+		<dip bits="2" name="Cabinet" ids="Upright,Cocktail"></dip>
+		<dip bits="3" name="Demo Mode" ids="Off,On"></dip>
+		<dip bits="4" name="Free Play" ids="Off,On"></dip>
 	</switches>
 	<rom index="0" zip="qbert.zip" md5="none">
 		<part crc="7a9ba824" name="qb-bg0.bin"/>
