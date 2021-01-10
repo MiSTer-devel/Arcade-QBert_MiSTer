@@ -260,9 +260,11 @@ ram #(.addr_width(11),.data_width(8)) C10_11 (
   .Q(C10_11_Q)
 );
 
+reg [12:0] PRG_addr;
+always @(posedge clk_sys) PRG_addr <= addr[12:0];
 dpram  #(.addr_width(13),.data_width(8)) C11_12 (
   .clk(clk_sys),
-  .addr(addr[12:0]),
+  .addr(PRG_addr),
   .dout(C11_12_Q),
   .ce(B8_Y[7]),
   .oe(B4_Y[3]),
@@ -273,7 +275,7 @@ dpram  #(.addr_width(13),.data_width(8)) C11_12 (
 
 dpram  #(.addr_width(13),.data_width(8)) C12_13 (
   .clk(clk_sys),
-  .addr(addr[12:0]),
+  .addr(PRG_addr),
   .dout(C12_13_Q),
   .ce(B8_Y[6]),
   .oe(B4_Y[3]),
@@ -284,7 +286,7 @@ dpram  #(.addr_width(13),.data_width(8)) C12_13 (
 
 dpram  #(.addr_width(13),.data_width(8)) C13_14 (
   .clk(clk_sys),
-  .addr(addr[12:0]),
+  .addr(PRG_addr),
   .dout(C13_14_Q),
   .ce(B8_Y[5]),
   .oe(B4_Y[3]),
@@ -295,7 +297,7 @@ dpram  #(.addr_width(13),.data_width(8)) C13_14 (
 
 dpram  #(.addr_width(13),.data_width(8)) C14_15 (
   .clk(clk_sys),
-  .addr(addr[12:0]),
+  .addr(PRG_addr),
   .dout(C14_15_Q),
   .ce(B8_Y[4]),
   .oe(B4_Y[3]),
@@ -306,7 +308,7 @@ dpram  #(.addr_width(13),.data_width(8)) C14_15 (
 
 dpram  #(.addr_width(13),.data_width(8)) C16 (
   .clk(clk_sys),
-  .addr(addr[12:0]),
+  .addr(PRG_addr),
   .dout(C16_Q),
   .ce(B8_Y[3]),
   .oe(B4_Y[3]),
@@ -373,9 +375,11 @@ x74161 D17(
 
 wire [7:0] E1_2_dout;
 assign E1_2_Q = ~E1_2_dout;
+reg [5:0] FGREG_addr;
+always @(posedge clk_sys) FGREG_addr <= H[5:0];
 dpram #(.addr_width(10),.data_width(8)) E1_2(
   .clk(clk_sys),
-  .addr(H[5:0]),
+  .addr(FGREG_addr),
   .dout(E1_2_dout),
   .ce(1'b0),
   .oe(1'b0),
@@ -388,7 +392,7 @@ wire [7:0] E2_3_dout;
 assign E2_3_Q = ~E2_3_dout;
 dpram #(.addr_width(10),.data_width(8)) E2_3(
   .clk(clk_sys),
-  .addr(H[5:0]),
+  .addr(FGREG_addr),
   .dout(E2_3_dout),
   .ce(1'b0),
   .oe(1'b0),
@@ -401,7 +405,7 @@ wire [7:0] E4_dout;
 assign E4_Q = ~E4_dout;
 dpram #(.addr_width(10),.data_width(8)) E4(
   .clk(clk_sys),
-  .addr(H[5:0]),
+  .addr(FGREG_addr),
   .dout(E4_dout),
   .ce(1'b0),
   .oe(1'b0),
@@ -960,9 +964,11 @@ x74379 K3(
 //00000000 1100 0000 0000 0000
 // K4,K5,K6,K7_8 addr_width(14), bit13 = BANK_SEL - fix me!
 wire bit13 =  BANK_SEL;
+reg [13:0] FGROM_addr;
+always @(posedge clk_sys) FGROM_addr <= {bit13,RA};
 dpram #(.addr_width(14),.data_width(8)) K4(
   .clk(clk_sys),
-  .addr({bit13,RA}),
+  .addr(FGROM_addr),
   .dout(K4_D),
   .ce(1'b0),
   .oe(1'b0),
@@ -973,7 +979,7 @@ dpram #(.addr_width(14),.data_width(8)) K4(
 
 dpram #(.addr_width(14),.data_width(8)) K5(
   .clk(clk_sys),
-  .addr({bit13,RA}),
+  .addr(FGROM_addr),
   .dout(K5_D),
   .ce(1'b0),
   .oe(1'b0),
@@ -984,7 +990,7 @@ dpram #(.addr_width(14),.data_width(8)) K5(
 
 dpram #(.addr_width(14),.data_width(8)) K6(
   .clk(clk_sys),
-  .addr({bit13,RA}),
+  .addr(FGROM_addr),
   .dout(K6_D),
   .ce(1'b0),
   .oe(1'b0),
@@ -995,7 +1001,7 @@ dpram #(.addr_width(14),.data_width(8)) K6(
 
 dpram #(.addr_width(14),.data_width(8)) K7_8(
   .clk(clk_sys),
-  .addr({bit13,RA}),
+  .addr(FGROM_addr),
   .dout(K7_8_D),
   .ce(1'b0),
   .oe(1'b0),
