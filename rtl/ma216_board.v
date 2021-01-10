@@ -104,7 +104,7 @@ riot U15(
   .PA_I({ &IP2720[3:0], 1'b0, ~IP2720 }),
   .PA_O(),
   .DDRA_O(),
-  .PB_I({ U14_AR, 1'b1, ~SB1[5:0] }),
+  .PB_I({ ~U14_AR, 1'b1, ~SB1[5:0] }),
   .PB_O(),
   .DDRB_O(),
   .IRQ_N(irq)
