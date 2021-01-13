@@ -246,23 +246,23 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 // XTAL = 15M
 // CPU_CLK from 8284 = 5M
 
-wire clk_sys, clk_100, clk_40;
+wire clk_sys, clk_40, clk_100;
 pll pll
 (
     .refclk(CLK_50M),
     .rst(0),
     .outclk_0(clk_sys), // 50Mhz
-    .outclk_1(clk_50),
+    .outclk_1(clk_100),
     .outclk_2(clk_40)
 //	 .outclk_3(clk_10) // todo: update pll
 );
 
-reg [3:0] cnt1;
+reg [4:0] cnt1;
 reg cpu_clk; // clock enable
-always @(posedge clk_sys) begin
-  cnt1 <= cnt1 + 4'd1;
-  if (cnt1 == 4'd9) begin
-    cnt1 <= 4'd0;
+always @(posedge clk_100) begin
+  cnt1 <= cnt1 + 5'd1;
+  if (cnt1 == 5'd19) begin
+    cnt1 <= 5'd0;
     cpu_clk <= 1'b1;
   end
   else cpu_clk <= 1'b0;
@@ -270,13 +270,13 @@ end
 
 // derive sound clock from clk_sys
 reg [5:0] cnt2;
-reg clk_2;
+reg sound_clk;
 always @(posedge clk_sys) begin
   cnt2 <= cnt2 + 6'd1;
-  clk_2 <= 1'b0;
-  if (cnt2 == 6'd45) begin
+  sound_clk <= 1'b0;
+  if (cnt2 == 6'd55) begin
     cnt2 <= 6'd0;
-    clk_2 <= 1'b1;
+    sound_clk <= 1'b1;
   end
 end
 
@@ -300,10 +300,8 @@ wire reset = RESET | status[0] | buttons[1];
 reg [7:0] sw[8];
 always @(posedge clk_sys) if (ioctl_wr && (ioctl_index==254) && !ioctl_addr[24:3]) sw[ioctl_addr[2:0]] <= ioctl_dout;
 
-wire HBlank;
-wire HSync;
-wire VBlank;
-wire VSync;
+wire HBlank, VBlank;
+wire HSync, VSync;
 
 wire [5:0] OP2720;
 
@@ -342,7 +340,7 @@ always @(*) begin
 		 joystick_0[0]  // down
 	};
 
-   case (mod)   
+   case (mod)
 			mod_qbert:
 			begin
 			end
@@ -372,7 +370,7 @@ always @(*) begin
 					 joystick_0[3], // right
 					 joystick_0[0],  // down
 					 joystick_0[2] // left
-				};			
+				};
 			end
 			mod_krull:
 			begin
@@ -382,7 +380,7 @@ always @(*) begin
 				IP1710 <= {
 					 2'b0,
 					 1'b0, // p2
-					 1'b0,//joystick_0[6], 
+					 1'b0,//joystick_0[6],
 					 1'b0,// coin 2
 					 joystick_0[7], // coin 1
 					 joystick_0[8], // test 1
@@ -397,8 +395,8 @@ always @(*) begin
 					 1'b0, // n/a
 					 joystick_0[10], // pitch left
 					 joystick_0[4], // swing
-					 1'b0  
-				};	
+					 1'b0
+				};
 			end
 			mod_tylz:
 			begin
@@ -426,7 +424,7 @@ always @(*) begin
 			begin
 			end
 		 endcase
-end	
+end
 
 wire [7:0] audio;
 wire [7:0] red, green, blue;
@@ -444,12 +442,12 @@ mylstar_board mylstar_board
   .CLK(clk_10),
   .CLK5(clk_5),
 
-  .CPU_CORE_CLK(clk_sys),
+  .CPU_CORE_CLK(clk_100),
   .CPU_CLK(cpu_clk),
 
   .HBlank(HBlank),
-  .HSync(HSync),
   .VBlank(VBlank),
+  .HSync(HSync),
   .VSync(VSync),
 
   .red(red),
@@ -470,7 +468,7 @@ mylstar_board mylstar_board
 
 // audio board
 ma216_board ma216_board(
-  .clk(clk_2),
+  .clk(sound_clk),
   .clk_sys(clk_sys),
   .reset(reset),
   .IP2720(OP2720),
@@ -484,16 +482,42 @@ ma216_board ma216_board(
 
 wire rotate_ccw = 1'b1;
 wire no_rotate = status[5] | (mod==mod_tylz);
+wire scandoubler = (status[17:15] || forced_scandoubler);
 screen_rotate screen_rotate (.*);
 
-arcade_video #(256,24) arcade_video
-(
-  .*,
-  .clk_video(clk_40),
-  .RGB_in({ red, green, blue }),
-  .fx(status[17:15])
-);
+// arcade_video #(256,24) arcade_video
+// (
+//   .*,
+//   .clk_video(clk_40),
+//   .RGB_in({ red, green, blue }),
+//   .fx(status[17:15])
+// );
 
-wire ce_pix = clk_5;
+assign CLK_VIDEO = clk_40;
+assign CE_PIXEL = clk_5;
+assign VGA_R = red;
+assign VGA_G = green;
+assign VGA_B = blue;
+assign VGA_HS = ~HSync;
+assign VGA_VS = ~VSync;
+assign VGA_DE = ~(VBlank | HBlank);
+
+// video_mixer #(.LINE_LENGTH(256), .GAMMA(1)) video_mixer
+// (
+// 	.*,
+
+// 	.clk_vid(CLK_VIDEO),
+//   .ce_pix(clk_10),
+// 	.ce_pix_out(CE_PIXEL),
+// 	.scanlines(0),
+// 	.hq2x(fx==1),
+// 	.mono(0),
+// 	.R(red),
+// 	.G(green),
+// 	.B(blue)
+
+// );
+
+// wire ce_pix = clk_10;
 
 endmodule
