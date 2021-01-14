@@ -485,29 +485,29 @@ wire no_rotate = status[5] | (mod==mod_tylz);
 wire scandoubler = (status[17:15] || forced_scandoubler);
 screen_rotate screen_rotate (.*);
 
-// arcade_video #(256,24) arcade_video
-// (
-//   .*,
-//   .clk_video(clk_40),
-//   .RGB_in({ red, green, blue }),
-//   .fx(status[17:15])
-// );
+arcade_video #(256,24) arcade_video
+(
+  .*,
+  .clk_video(clk_40),
+  .RGB_in({ red, green, blue }),
+  .fx(status[17:15])
+);
 
-assign CLK_VIDEO = clk_40;
-assign CE_PIXEL = clk_5;
-assign VGA_R = red;
-assign VGA_G = green;
-assign VGA_B = blue;
-assign VGA_HS = ~HSync;
-assign VGA_VS = ~VSync;
-assign VGA_DE = ~(VBlank | HBlank);
+// assign CLK_VIDEO = clk_40;
+// assign CE_PIXEL = clk_5;
+// assign VGA_R = red;
+// assign VGA_G = green;
+// assign VGA_B = blue;
+// assign VGA_HS = ~HSync;
+// assign VGA_VS = ~VSync;
+// assign VGA_DE = ~(VBlank | HBlank);
 
 // video_mixer #(.LINE_LENGTH(256), .GAMMA(1)) video_mixer
 // (
 // 	.*,
 
 // 	.clk_vid(CLK_VIDEO),
-//   .ce_pix(clk_10),
+//  .ce_pix(clk_10),
 // 	.ce_pix_out(CE_PIXEL),
 // 	.scanlines(0),
 // 	.hq2x(fx==1),
@@ -518,6 +518,6 @@ assign VGA_DE = ~(VBlank | HBlank);
 
 // );
 
-// wire ce_pix = clk_10;
+wire ce_pix = clk_5;
 
 endmodule
