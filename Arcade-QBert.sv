@@ -251,10 +251,9 @@ pll pll
 (
     .refclk(CLK_50M),
     .rst(0),
-    .outclk_0(clk_sys), // 50Mhz
-    .outclk_1(clk_100),
-    .outclk_2(clk_40)
-//	 .outclk_3(clk_10) // todo: update pll
+    .outclk_0(clk_sys), // 50Mhz mostly used for bram & sound
+    .outclk_1(clk_100), // CPU only - 100MHz & 5MHz
+    .outclk_2(clk_40)   // rotation 40MHz + video 10MHz & 5MHz
 );
 
 reg [4:0] cnt1;
@@ -445,11 +444,6 @@ mylstar_board mylstar_board
   .CPU_CORE_CLK(clk_100),
   .CPU_CLK(cpu_clk),
 
-  .HBlank(HBlank),
-  .VBlank(VBlank),
-  .HSync(HSync),
-  .VSync(VSync),
-
   .red(red),
   .green(green),
   .blue(blue),
@@ -485,7 +479,7 @@ wire no_rotate = status[5] | (mod==mod_tylz);
 wire scandoubler = (status[17:15] || forced_scandoubler);
 screen_rotate screen_rotate (.*);
 
-arcade_video #(256,24) arcade_video
+arcade_video #(256,24,0) arcade_video
 (
   .*,
   .clk_video(clk_40),
@@ -493,31 +487,46 @@ arcade_video #(256,24) arcade_video
   .fx(status[17:15])
 );
 
-// assign CLK_VIDEO = clk_40;
-// assign CE_PIXEL = clk_5;
-// assign VGA_R = red;
-// assign VGA_G = green;
-// assign VGA_B = blue;
-// assign VGA_HS = ~HSync;
-// assign VGA_VS = ~VSync;
-// assign VGA_DE = ~(VBlank | HBlank);
-
-// video_mixer #(.LINE_LENGTH(256), .GAMMA(1)) video_mixer
-// (
-// 	.*,
-
-// 	.clk_vid(CLK_VIDEO),
-//  .ce_pix(clk_10),
-// 	.ce_pix_out(CE_PIXEL),
-// 	.scanlines(0),
-// 	.hq2x(fx==1),
-// 	.mono(0),
-// 	.R(red),
-// 	.G(green),
-// 	.B(blue)
-
-// );
+HVGEN hvgen(
+  .vclk(clk_5),
+  .hb(HBlank),
+  .vb(VBlank),
+  .hs(HSync),
+  .vs(VSync)
+);
 
 wire ce_pix = clk_5;
+
+endmodule
+
+module HVGEN (
+  input vclk,
+  output reg hb = 1,
+  output reg vb = 1,
+  output reg hs = 1,
+  output reg vs = 1
+);
+
+reg [8:0] hcnt;
+reg [7:0] vcnt;
+always @(posedge vclk) begin
+  hcnt <= hcnt + 1'b1;
+  case (hcnt)
+    0: hb <= 1'b0;
+    255: hb <= 1'b1;
+    283: hs <= 1'b0;
+    303: hs <= 1'b1;
+    317: begin
+      vcnt <= vcnt + 1'b1;
+      hcnt <= 1'b0;
+      case (vcnt)
+        239: vb <= 1'b1;
+        251: vs <= 1'b0;
+        254: vs <= 1'b1;
+        255: begin vcnt <= 1'b0; vb <= 1'b0; end
+      endcase
+    end
+  endcase
+end
 
 endmodule
