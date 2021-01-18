@@ -207,6 +207,7 @@ wire  [7:0] ioctl_dout;
 wire        ioctl_download;
 wire  [7:0] ioctl_index;
 wire        ioctl_wait;
+wire        ioctl_upload;
 
 wire [15:0] joystick_0;
 
@@ -233,6 +234,7 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
   .ioctl_dout(ioctl_dout),
   .ioctl_wait(ioctl_wait),
   .ioctl_index(ioctl_index),
+  .ioctl_upload(ioctl_upload),
 
   .joystick_0(joystick_0)
 );
@@ -432,8 +434,6 @@ wire [7:0] red, green, blue;
 assign AUDIO_L = { audio, 8'd0 };
 assign AUDIO_R = { audio, 8'd0 };
 
-wire rom_init = ioctl_download && (ioctl_index==0);
-
 mylstar_board mylstar_board
 (
   .clk_sys(clk_sys),
@@ -456,9 +456,13 @@ mylstar_board mylstar_board
 
   .dip_switch(sw[0]),
 
-  .rom_init(rom_init),
-  .rom_init_address(ioctl_addr),
-  .rom_init_data(ioctl_dout)
+  .ioctl_index(ioctl_index),
+  .ioctl_download(ioctl_download),
+  .ioctl_addr(ioctl_addr),
+  .ioctl_upload(ioctl_upload),
+  .ioctl_dout(ioctl_dout),
+  .ioctl_din(ioctl_din)
+
 );
 
 // audio board
@@ -468,9 +472,10 @@ ma216_board ma216_board(
   .reset(reset),
   .IP2720(OP2720),
   .audio(audio),
-  .rom_init(rom_init),
-  .rom_init_address(ioctl_addr),
-  .rom_init_data(ioctl_dout)
+  .ioctl_index(ioctl_index),
+  .ioctl_download(ioctl_download),
+  .ioctl_addr(ioctl_addr),
+  .ioctl_dout(ioctl_dout)
 );
 
 // 256x240 15KHz 60Hz
@@ -484,15 +489,12 @@ arcade_video #(256,24,0) arcade_video
 (
   .*,
   .clk_video(clk_40),
-  .RGB_in({ rgbout[23:16], rgbout[15:8], rgbout[7:0] }),
+  .RGB_in({ red, green, blue }),
   .fx(status[17:15])
 );
 
-wire [23:0] rgbout;
 HVGEN hvgen(
   .vclk(clk_5),
-  .rgbin({ red, green, blue }),
-  .rgbout(rgbout),
   .hb(HBlank),
   .vb(VBlank),
   .hs(HSync),
@@ -506,8 +508,6 @@ endmodule
 
 module HVGEN (
   input vclk,
-  input [23:0] rgbin,
-  output [23:0] rgbout,
   input colfix,
   output reg hb = 1,
   output reg vb = 1,
@@ -518,7 +518,6 @@ module HVGEN (
 wire [7:0] endhb = colfix ? 5 : 0;
 reg [8:0] hcnt;
 reg [7:0] vcnt;
-assign rgbout = hb | vb ? 24'd0 : rgbin;
 always @(posedge vclk) begin
   hcnt <= hcnt + 1'b1;
   case (hcnt)

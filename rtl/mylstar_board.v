@@ -26,11 +26,18 @@ module mylstar_board
 
   input   [7:0] dip_switch,
 
-  input rom_init,
-  input [17:0] rom_init_address,
-  input [7:0] rom_init_data
+  input ioctl_index,
+  input ioctl_download,
+  input [17:0] ioctl_addr,
+  input ioctl_upload,
+  input [7:0] ioctl_dout,
+  output [7:0] ioctl_din
+
 );
 
+wire loading_roms = ioctl_download && ioctl_index == 0;
+wire loading_nvram = ioctl_download && ioctl_index == 4;
+assign ioctl_din = ioctl_upload ? C5_Q | C6_Q : 8'd0;
 
 assign VSync = K15_4;
 assign HSync = K17_Q[0];
@@ -200,23 +207,29 @@ wire [7:0] B12 = ~B10_Y[0] ? dip_switch : 8'd0;
 
 wire [7:0] B14 = ~B10_Y[4] ? P1_B14 : 8'd0;
 
+wire [7:0] C5_din = loading_nvram ? ioctl_dout : cpu_dout;
+wire C5_wr = loading_nvram ? ~(ioctl_addr < 18'h800) : (ioctl_upload ? 1'b1 : B4_Y[0]);
+wire [10:0] C5_addr = loading_nvram | ioctl_upload ? ioctl_addr : addr[10:0];
 ram #(.addr_width(11),.data_width(8)) C5 (
   .clk(clk_sys),
-  .din(cpu_dout),
-  .addr(addr[10:0]),
+  .din(C5_din),
+  .addr(C5_addr),
   .cs(B6_Y[0]),
   .oe(B4_Y[2]),
-  .wr(B4_Y[0]),
+  .wr(C5_wr),
   .Q(C5_Q)
 );
 
+wire [7:0] C6_din = loading_nvram ? ioctl_dout : cpu_dout;
+wire C6_wr = loading_nvram ? 1'b0 : (ioctl_upload ? 1'b1 : B4_Y[0]);
+wire [10:0] C6_addr =  loading_nvram | ioctl_upload ? ioctl_addr : addr[10:0];
 ram #(.addr_width(11),.data_width(8)) C6 (
   .clk(clk_sys),
-  .din(cpu_dout),
-  .addr(addr[10:0]),
+  .din(C6_din),
+  .addr(C6_addr),
   .cs(B6_Y[1]),
   .oe(B4_Y[2]),
-  .wr(B4_Y[0]),
+  .wr(C6_wr),
   .Q(C6_Q)
 );
 
@@ -268,9 +281,9 @@ dpram  #(.addr_width(13),.data_width(8)) C11_12 (
   .dout(C11_12_Q),
   .ce(B8_Y[7]),
   .oe(B4_Y[3]),
-  .we(rom_init & rom_init_address < 18'h4000),
-  .waddr(rom_init_address),
-  .wdata(rom_init_data)
+  .we(loading_roms & ioctl_addr < 18'h4000),
+  .waddr(ioctl_addr),
+  .wdata(ioctl_dout)
 );
 
 dpram  #(.addr_width(13),.data_width(8)) C12_13 (
@@ -279,9 +292,9 @@ dpram  #(.addr_width(13),.data_width(8)) C12_13 (
   .dout(C12_13_Q),
   .ce(B8_Y[6]),
   .oe(B4_Y[3]),
-  .we(rom_init & rom_init_address < 18'h6000),
-  .waddr(rom_init_address),
-  .wdata(rom_init_data)
+  .we(loading_roms & ioctl_addr < 18'h6000),
+  .waddr(ioctl_addr),
+  .wdata(ioctl_dout)
 );
 
 dpram  #(.addr_width(13),.data_width(8)) C13_14 (
@@ -290,9 +303,9 @@ dpram  #(.addr_width(13),.data_width(8)) C13_14 (
   .dout(C13_14_Q),
   .ce(B8_Y[5]),
   .oe(B4_Y[3]),
-  .we(rom_init & rom_init_address < 18'h8000),
-  .waddr(rom_init_address),
-  .wdata(rom_init_data)
+  .we(loading_roms & ioctl_addr < 18'h8000),
+  .waddr(ioctl_addr),
+  .wdata(ioctl_dout)
 );
 
 dpram  #(.addr_width(13),.data_width(8)) C14_15 (
@@ -301,9 +314,9 @@ dpram  #(.addr_width(13),.data_width(8)) C14_15 (
   .dout(C14_15_Q),
   .ce(B8_Y[4]),
   .oe(B4_Y[3]),
-  .we(rom_init & rom_init_address < 18'ha000),
-  .waddr(rom_init_address),
-  .wdata(rom_init_data)
+  .we(loading_roms & ioctl_addr < 18'ha000),
+  .waddr(ioctl_addr),
+  .wdata(ioctl_dout)
 );
 
 dpram  #(.addr_width(13),.data_width(8)) C16 (
@@ -312,9 +325,9 @@ dpram  #(.addr_width(13),.data_width(8)) C16 (
   .dout(C16_Q),
   .ce(B8_Y[3]),
   .oe(B4_Y[3]),
-  .we(rom_init & rom_init_address < 18'hc000),
-  .waddr(rom_init_address),
-  .wdata(rom_init_data)
+  .we(loading_roms & ioctl_addr < 18'hc000),
+  .waddr(ioctl_addr),
+  .wdata(ioctl_dout)
 );
 
 x74139 D1(
@@ -460,9 +473,9 @@ dpram  #(.addr_width(13),.data_width(8)) E11_12 (
   .ce(1'b0),
   //.ce(L10_Q1),
   .oe(1'b0),
-  .we(rom_init & rom_init_address < 18'h2000),
-  .waddr(rom_init_address),
-  .wdata(rom_init_data)
+  .we(loading_roms & ioctl_addr < 18'h2000),
+  .waddr(ioctl_addr),
+  .wdata(ioctl_dout)
 );
 
 // E15
@@ -972,9 +985,9 @@ dpram #(.addr_width(14),.data_width(8)) K4(
   .dout(K4_D),
   .ce(1'b0),
   .oe(1'b0),
-  .we(rom_init && rom_init_address < 18'h10000),
-  .waddr(rom_init_address),
-  .wdata(rom_init_data)
+  .we(loading_roms && ioctl_addr < 18'h10000),
+  .waddr(ioctl_addr),
+  .wdata(ioctl_dout)
 );
 
 dpram #(.addr_width(14),.data_width(8)) K5(
@@ -983,9 +996,9 @@ dpram #(.addr_width(14),.data_width(8)) K5(
   .dout(K5_D),
   .ce(1'b0),
   .oe(1'b0),
-  .we(rom_init && rom_init_address < 18'h14000),
-  .waddr(rom_init_address),
-  .wdata(rom_init_data)
+  .we(loading_roms && ioctl_addr < 18'h14000),
+  .waddr(ioctl_addr),
+  .wdata(ioctl_dout)
 );
 
 dpram #(.addr_width(14),.data_width(8)) K6(
@@ -994,9 +1007,9 @@ dpram #(.addr_width(14),.data_width(8)) K6(
   .dout(K6_D),
   .ce(1'b0),
   .oe(1'b0),
-  .we(rom_init && rom_init_address < 18'h18000),
-  .waddr(rom_init_address),
-  .wdata(rom_init_data)
+  .we(loading_roms && ioctl_addr < 18'h18000),
+  .waddr(ioctl_addr),
+  .wdata(ioctl_dout)
 );
 
 dpram #(.addr_width(14),.data_width(8)) K7_8(
@@ -1005,9 +1018,9 @@ dpram #(.addr_width(14),.data_width(8)) K7_8(
   .dout(K7_8_D),
   .ce(1'b0),
   .oe(1'b0),
-  .we(rom_init & rom_init_address < 18'h1C000),
-  .waddr(rom_init_address),
-  .wdata(rom_init_data)
+  .we(loading_roms & ioctl_addr < 18'h1C000),
+  .waddr(ioctl_addr),
+  .wdata(ioctl_dout)
 );
 
 x74157 K9(

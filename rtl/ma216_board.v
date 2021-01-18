@@ -8,10 +8,13 @@ module ma216_board(
 
   output [7:0] audio,
 
-  input rom_init,
-  input [17:0] rom_init_address,
-  input [7:0] rom_init_data
+  input ioctl_index,
+  input ioctl_download,
+  input [17:0] ioctl_addr,
+  input [7:0] ioctl_dout
 );
+
+wire loading_roms = ioctl_download && ioctl_index == 0;
 
 assign audio = U7_8;
 
@@ -54,9 +57,9 @@ dpram #(.addr_width(11),.data_width(8)) U5 (
   .dout(U5_dout),
   .ce(U4_O[7]),
   .oe(AB[11]),
-  .we(rom_init & rom_init_address < 18'h1C800),
-  .waddr(rom_init_address),
-  .wdata(rom_init_data)
+  .we(loading_roms & ioctl_addr < 18'h1C800),
+  .waddr(ioctl_addr),
+  .wdata(ioctl_dout)
 );
 
 dpram #(.addr_width(11),.data_width(8)) U6 (
@@ -65,9 +68,9 @@ dpram #(.addr_width(11),.data_width(8)) U6 (
   .dout(U6_dout),
   .ce(U4_O[7]),
   .oe(~AB[11]),
-  .we(rom_init & rom_init_address < 18'h1D000),
-  .waddr(rom_init_address),
-  .wdata(rom_init_data)
+  .we(loading_roms & ioctl_addr < 18'h1D000),
+  .waddr(ioctl_addr),
+  .wdata(ioctl_dout)
 );
 
 // U7 U8
