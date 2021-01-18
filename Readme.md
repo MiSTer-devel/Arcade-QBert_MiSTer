@@ -41,6 +41,5 @@ Bugs & WIP
 - Problem with horizontal position register E1-2. When a new object is falling from the top of the screen (ball), it appears briefly at the bottom of the screen. WIP
 - High Scores screen: the big three letters of player's name are not displayed correctly. It works well after a few resets (is it a problem with bus sharing logic which sends zeros to simulate high impedance for ORing outputs?).
 - Votrax chip is cruelly missing, QBert needs his @!#?@! voice!!! WIP (fake Votrax)
-- The left side of the screen shows a series of zero characters. It seems to be an original bug, todo: implement a screen position tool like the one on Minimig core.
 - QBert Qubes: the rolling cube screen has a bug (timing?). WIP
 

@@ -184,6 +184,7 @@ localparam CONF_STR = {
   "H0O89,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
   "-;",
   "O6,Test mode,Off,On;",
+  "O7,Original column bug,Off,On;",
   "-;",
   "DIP;",
   "-;",
@@ -483,16 +484,20 @@ arcade_video #(256,24,0) arcade_video
 (
   .*,
   .clk_video(clk_40),
-  .RGB_in({ red, green, blue }),
+  .RGB_in({ rgbout[23:16], rgbout[15:8], rgbout[7:0] }),
   .fx(status[17:15])
 );
 
+wire [23:0] rgbout;
 HVGEN hvgen(
   .vclk(clk_5),
+  .rgbin({ red, green, blue }),
+  .rgbout(rgbout),
   .hb(HBlank),
   .vb(VBlank),
   .hs(HSync),
-  .vs(VSync)
+  .vs(VSync),
+  .colfix(~status[7])
 );
 
 wire ce_pix = clk_5;
@@ -501,18 +506,24 @@ endmodule
 
 module HVGEN (
   input vclk,
+  input [23:0] rgbin,
+  output [23:0] rgbout,
+  input colfix,
   output reg hb = 1,
   output reg vb = 1,
   output reg hs = 1,
   output reg vs = 1
 );
 
+wire [7:0] endhb = colfix ? 5 : 0;
 reg [8:0] hcnt;
 reg [7:0] vcnt;
+assign rgbout = hb | vb ? 24'd0 : rgbin;
 always @(posedge vclk) begin
   hcnt <= hcnt + 1'b1;
   case (hcnt)
-    0: hb <= 1'b0;
+    0: hb <= colfix ? 1'b1 : 1'b0; // keep hbl active if colfix
+    5: hb <= 1'b0;
     255: hb <= 1'b1;
     283: hs <= 1'b0;
     303: hs <= 1'b1;
