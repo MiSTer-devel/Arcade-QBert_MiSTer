@@ -42,9 +42,6 @@ Game Compatibility List
 Known Bugs
 ----------
 
-- MRA files.
 - Problem with vertical position register E1-2. When a new object is falling from the top of the screen (ball), it appears briefly at the bottom of the screen.
 - High Scores screen: the big three letters of player's name are not displayed correctly. It works well after a few resets (is it a problem with bus sharing logic which sends zeros to simulate high impedance for ORing outputs?). I don't have the PCB so it's difficult to know the original behavior.
 - Votrax chip is cruelly missing, QBert needs his @!#?@! voice!!!
-- QBert Qubes: the rolling cube screen has a bug and Mad Planets has blinking letters (timing?).
-
