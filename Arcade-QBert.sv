@@ -369,10 +369,10 @@ always @(*) begin
 					 joystick_0[5],  // p1
 
 					 joystick_0[4], // button 1
-					 joystick_0[0], // up
-					 joystick_0[3], // right
-					 joystick_0[1],  // down
-					 joystick_0[2] // left
+					 joystick_0[1], // up
+					 joystick_0[2], // right
+					 joystick_0[0],  // down
+					 joystick_0[3] // left
 				};
 			end
 			mod_krull:
