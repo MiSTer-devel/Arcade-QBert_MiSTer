@@ -213,7 +213,7 @@ wire [15:0] joystick_1;
 
 hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 (
-  .clk_sys(clk_sys),
+  .clk_sys(clk_25),
   .HPS_BUS(HPS_BUS),
   .EXT_BUS(),
   .gamma_bus(gamma_bus),
@@ -249,21 +249,21 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 // XTAL = 15M
 // CPU_CLK from 8284 = 5M
 
-wire clk_sys, clk_40, clk_100;
+wire clk_sys, clk_40, clk_25;
 pll pll
 (
     .refclk(CLK_50M),
     .rst(0),
     .outclk_0(clk_sys), // 50Mhz mostly used for bram & sound
-    .outclk_1(clk_100), // CPU only - 100MHz & 5MHz
-    .outclk_2(clk_40)   // rotation 40MHz + video 10MHz & 5MHz
+    .outclk_1(clk_40),   // rotation 40MHz + video 10MHz & 5MHz
+	 .outclk_2(clk_25)
 );
 
-reg [4:0] cnt1;
+reg [3:0] cnt1;
 reg cpu_clk; // clock enable
-always @(posedge clk_100) begin
+always @(posedge clk_sys) begin
   cnt1 <= cnt1 + 5'd1;
-  if (cnt1 == 5'd19) begin
+  if (cnt1 == 5'd9) begin
     cnt1 <= 5'd0;
     cpu_clk <= 1'b1;
   end
@@ -300,7 +300,7 @@ wire reset = RESET | status[0] | buttons[1];
 // read dip switches
 
 reg [7:0] sw[8];
-always @(posedge clk_sys) if (ioctl_wr && (ioctl_index==254) && !ioctl_addr[24:3]) sw[ioctl_addr[2:0]] <= ioctl_dout;
+always @(posedge clk_25) if (ioctl_wr && (ioctl_index==254) && !ioctl_addr[24:3]) sw[ioctl_addr[2:0]] <= ioctl_dout;
 
 wire HBlank, VBlank;
 wire HSync, VSync;
@@ -316,7 +316,7 @@ localparam mod_tylz = 5;
 localparam mod_insector = 6;
 
 reg [7:0] mod = 255;
-always @(posedge clk_sys) if (ioctl_wr & (ioctl_index==1)) mod <= ioctl_dout;
+always @(posedge clk_25) if (ioctl_wr & (ioctl_index==1)) mod <= ioctl_dout;
 
 
 wire [7:0] IP1710;
@@ -369,9 +369,9 @@ always @(*) begin
 					 joystick_0[5],  // p1
 
 					 joystick_0[4], // button 1
-					 joystick_0[1], // up
+					 joystick_0[0], // up
 					 joystick_0[3], // right
-					 joystick_0[0],  // down
+					 joystick_0[1],  // down
 					 joystick_0[2] // left
 				};
 			end
@@ -474,7 +474,7 @@ mylstar_board mylstar_board
   .CLK(clk_10),
   .CLK5(clk_5),
 
-  .CPU_CORE_CLK(clk_100),
+  .CPU_CORE_CLK(clk_sys),
   .CPU_CLK(cpu_clk),
 
   .red(red),
@@ -511,7 +511,7 @@ ma216_board ma216_board(
 // copying fx into a register
 // fixes a timing problem
 reg [2:0]fx;
-always @(posedge clk_sys)
+always @(posedge clk_25)
 begin
 	fx <= status[17:15];
 end
