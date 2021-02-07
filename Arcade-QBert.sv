@@ -171,17 +171,17 @@ assign BUTTONS = 0;
 
 wire [1:0] ar = status[9:8];
 
-assign VIDEO_ARX = (!ar) ? 12'd4 : (ar - 1'd1);
-assign VIDEO_ARY = (!ar) ? 12'd3 : 12'd0;
+assign VIDEO_ARX = (!ar) ? ((no_rotate ) ? 8'd4 : 8'd3) : (ar - 1'd1);
+assign VIDEO_ARY = (!ar) ? ((no_rotate) ? 8'd3 : 8'd4) : 12'd0;
 
 `include "build_id.v"
 localparam CONF_STR = {
   "QBert;;",
   "-;",
-  "F0,bin,Rom Load;",
+  //"F0,bin,Rom Load;",
+  "H0O89,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
   "O5,Orientation,Vert,Horz;",
   "OFH,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
-  "H0O89,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
   "-;",
   "O6,Test mode,Off,On;",
   "O7,Original column bug,Off,On;",
@@ -209,6 +209,7 @@ wire  [7:0] ioctl_index;
 wire        ioctl_wait;
 
 wire [15:0] joystick_0;
+wire [15:0] joystick_1;
 
 hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 (
@@ -234,7 +235,8 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
   .ioctl_wait(ioctl_wait),
   .ioctl_index(ioctl_index),
 
-  .joystick_0(joystick_0)
+  .joystick_0(joystick_0),
+  .joystick_1(joystick_1)
 );
 
 ///////////////////////   CLOCKS   ///////////////////////////////
@@ -311,6 +313,7 @@ localparam mod_mplanets    = 2;
 localparam mod_krull    = 3;
 localparam mod_curvebal = 4;
 localparam mod_tylz = 5;
+localparam mod_insector = 6;
 
 reg [7:0] mod = 255;
 always @(posedge clk_sys) if (ioctl_wr & (ioctl_index==1)) mod <= ioctl_dout;
@@ -406,6 +409,7 @@ always @(*) begin
 					 1'b0,//joystick_0[6], // coin 2
 					 joystick_0[4], // test 1
 					 ~status[6]
+
 				};
 
 				IP4740 <= { // IN4
@@ -413,13 +417,41 @@ always @(*) begin
  					joystick_0[6], // p2
 					 joystick_0[5],  // p1
 
-					 joystick_0[4], // button 1
-					 joystick_0[2], // left
-					 joystick_0[1], // up
+					 joystick_0[8], // button 1
 					 joystick_0[3], // right
-					 joystick_0[0]  // down
+					 joystick_0[0], // down
+					 joystick_0[2], // left
+					 joystick_0[1]  // up
 				};
 			end
+				mod_insector:
+				begin
+				IP1710 <= { // IN1
+					 1'b0,
+					 ~status[6],
+					joystick_1[9],
+					joystick_1[8],
+					 1'b0,//joystick_0[6], // coin 2
+					joystick_0[7], // coin 1
+					joystick_0[9],
+					joystick_0[8]
+		
+			};
+
+				IP4740 <= { // IN4
+					 
+					 joystick_1[1], 
+					 joystick_1[2], 
+					 joystick_1[0], 
+					 joystick_1[3],  
+
+					 
+					 joystick_0[1], 
+					 joystick_0[2], 
+					 joystick_0[0], 
+					 joystick_0[3]  
+				};				
+				end
 			default:
 			begin
 			end
@@ -475,17 +507,27 @@ ma216_board ma216_board(
 
 // 256x240 15KHz 60Hz
 
+
+// copying fx into a register
+// fixes a timing problem
+reg [2:0]fx;
+always @(posedge clk_sys)
+begin
+	fx <= status[17:15];
+end
+
+
+
 wire rotate_ccw = 1'b1;
-wire no_rotate = status[5] | (mod==mod_tylz);
-wire scandoubler = (status[17:15] || forced_scandoubler);
+wire no_rotate = status[5] | (mod==mod_tylz) | (mod==mod_insector) | direct_video;
+//wire scandoubler = (status[17:15] || forced_scandoubler);
 screen_rotate screen_rotate (.*);
 
 arcade_video #(256,24,0) arcade_video
 (
   .*,
   .clk_video(clk_40),
-  .RGB_in({ rgbout[23:16], rgbout[15:8], rgbout[7:0] }),
-  .fx(status[17:15])
+  .RGB_in({ rgbout[23:16], rgbout[15:8], rgbout[7:0] })
 );
 
 wire [23:0] rgbout;
