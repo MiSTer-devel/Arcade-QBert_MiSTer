@@ -171,8 +171,8 @@ assign BUTTONS = 0;
 
 wire [1:0] ar = status[9:8];
 
-assign VIDEO_ARX = (!ar) ? ((no_rotate ) ? 8'd4 : 8'd3) : (ar - 1'd1);
-assign VIDEO_ARY = (!ar) ? ((no_rotate) ? 8'd3 : 8'd4) : 12'd0;
+assign VIDEO_ARX = (!ar) ? ((no_rotate) ? 8'd8 : 8'd7) : (ar - 1'd1);
+assign VIDEO_ARY = (!ar) ? ((no_rotate) ? 8'd7 : 8'd8) : 12'd0;
 
 `include "build_id.v"
 localparam CONF_STR = {
@@ -185,6 +185,7 @@ localparam CONF_STR = {
   "-;",
   "O6,Test mode,Off,On;",
   "O7,Original column bug,Off,On;",
+  "OA,Diagonal joystick,Off,On;",
   "-;",
   "DIP;",
   "-;",
@@ -346,6 +347,15 @@ always @(*) begin
    case (mod)
 			mod_qbert:
 			begin
+        if (status[10]) begin
+          IP4740 <= {
+            4'b0,
+            joystick_0[2] & joystick_0[1], // left + up
+            joystick_0[3] & joystick_0[0], // right + down
+            joystick_0[1] & joystick_0[3], // up + right
+            joystick_0[0] & joystick_0[2] // down + left
+          };
+        end
 			end
 			mod_qub:
 			begin
@@ -435,22 +445,22 @@ always @(*) begin
 					joystick_0[7], // coin 1
 					joystick_0[9],
 					joystick_0[8]
-		
+
 			};
 
 				IP4740 <= { // IN4
-					 
-					 joystick_1[1], 
-					 joystick_1[2], 
-					 joystick_1[0], 
-					 joystick_1[3],  
 
-					 
-					 joystick_0[1], 
-					 joystick_0[2], 
-					 joystick_0[0], 
-					 joystick_0[3]  
-				};				
+					 joystick_1[1],
+					 joystick_1[2],
+					 joystick_1[0],
+					 joystick_1[3],
+
+
+					 joystick_0[1],
+					 joystick_0[2],
+					 joystick_0[0],
+					 joystick_0[3]
+				};
 				end
 			default:
 			begin
