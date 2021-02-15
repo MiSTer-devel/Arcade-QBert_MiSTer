@@ -182,6 +182,7 @@ localparam CONF_STR = {
   "H0O89,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
   "O5,Orientation,Vert,Horz;",
   "OFH,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
+  "OB,VFlip,Off,On;",
   "-;",
   "O6,Test mode,Off,On;",
   "O7,Original column bug,Off,On;",
@@ -253,11 +254,11 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 wire clk_sys, clk_40, clk_25;
 pll pll
 (
-    .refclk(CLK_50M),
-    .rst(0),
-    .outclk_0(clk_sys), // 50Mhz mostly used for bram & sound
-    .outclk_1(clk_40),   // rotation 40MHz + video 10MHz & 5MHz
-	 .outclk_2(clk_25)
+  .refclk(CLK_50M),
+  .rst(0),
+  .outclk_0(clk_sys), // 50Mhz mostly used for bram & sound
+  .outclk_1(clk_40),   // rotation 40MHz + video 10MHz & 5MHz
+  .outclk_2(clk_25)
 );
 
 reg [3:0] cnt1;
@@ -326,146 +327,153 @@ wire [7:0] IP4740;
 
 always @(*) begin
 
-	IP1710 <= {
-		 joystick_0[4], // test 1
-		 ~status[6],    // test 2
-		 2'b0,
-		 joystick_0[7], // coin 1
-		 1'b0,//joystick_0[6], // coin 2
-		 joystick_0[6], // p2
-		 joystick_0[5]  // p1
-	};
+  IP1710 <= {
+    joystick_0[4], // test 1
+    ~status[6],    // test 2
+    2'b0,
+    joystick_0[7], // coin 1
+    1'b0,//joystick_0[6], // coin 2
+    joystick_0[6], // p2
+    joystick_0[5]  // p1
+  };
 
-	IP4740 <= {
-		 4'b0,
-		 joystick_0[2], // left
-		 joystick_0[3], // right
-		 joystick_0[1], // up
-		 joystick_0[0]  // down
-	};
+  if (~status[10]) begin
+    IP4740 <= {
+      4'b0,
+      joystick_0[2], // left
+      joystick_0[3], // right
+      joystick_0[1], // up
+      joystick_0[0]  // down
+    };
+  end
 
-   case (mod)
-			mod_qbert:
-			begin
-        if (status[10]) begin
-          IP4740 <= {
-            4'b0,
-            joystick_0[2] & joystick_0[1], // left + up
-            joystick_0[3] & joystick_0[0], // right + down
-            joystick_0[1] & joystick_0[3], // up + right
-            joystick_0[0] & joystick_0[2] // down + left
-          };
-        end
-			end
-			mod_qub:
-			begin
-			end
-			mod_mplanets:
-			begin
-				IP1710 <= {
-					 ~status[6],    // test 2
-					 joystick_0[9], // test 1
-					 2'b0,
-					 1'b0,
-					 1'b0, // coin 1
-					 1'b0, // coin 2
-					 joystick_0[7]  // coin
-				};
+  case (mod)
+    mod_qbert:
+    begin
+      if (status[10]) begin
+        IP4740 <= {
+          4'b0,
+          joystick_0[2] & joystick_0[1], // left + up
+          joystick_0[3] & joystick_0[0], // right + down
+          joystick_0[1] & joystick_0[3], // up + right
+          joystick_0[0] & joystick_0[2] // down + left
+        };
+      end
+    end
 
-				IP4740 <= {
-					joystick_0[8],// button 2
+    mod_qub:
+    begin
+    end
 
-					joystick_0[6], // p2
-					 joystick_0[5],  // p1
+    mod_mplanets:
+    begin
+      IP1710 <= {
+          ~status[6],    // test 2
+          joystick_0[9], // test 1
+          2'b0,
+          1'b0,
+          1'b0, // coin 1
+          1'b0, // coin 2
+          joystick_0[7]  // coin
+      };
 
-					 joystick_0[4], // button 1
-					 joystick_0[1], // up
-					 joystick_0[2], // right
-					 joystick_0[0],  // down
-					 joystick_0[3] // left
-				};
-			end
-			mod_krull:
-			begin
-			end
-			mod_curvebal:
-			begin
-				IP1710 <= {
-					 2'b0,
-					 1'b0, // p2
-					 1'b0,//joystick_0[6],
-					 1'b0,// coin 2
-					 joystick_0[7], // coin 1
-					 joystick_0[8], // test 1
-					 ~status[6],    // test 2
-				};
+      IP4740 <= {
+        joystick_0[8],// button 2
 
-				IP4740 <= {
-					1'b0, // n/a
-					joystick_0[9], // bunt
-					1'b0, // n/a
-					 joystick_0[11], // pitch right
-					 1'b0, // n/a
-					 joystick_0[10], // pitch left
-					 joystick_0[4], // swing
-					 1'b0
-				};
-			end
-			mod_tylz:
-			begin
-				IP1710 <= { // IN1
-					 4'b0,
-					 joystick_0[7], // coin 1
-					 1'b0,//joystick_0[6], // coin 2
-					 joystick_0[4], // test 1
-					 ~status[6]
+        joystick_0[6], // p2
+        joystick_0[5],  // p1
 
-				};
+        joystick_0[4], // button 1
+        joystick_0[1], // up
+        joystick_0[2], // right
+        joystick_0[0],  // down
+        joystick_0[3] // left
+      };
+    end
 
-				IP4740 <= { // IN4
-					 1'b0,
- 					joystick_0[6], // p2
-					 joystick_0[5],  // p1
+    mod_krull:
+    begin
+    end
 
-					 joystick_0[8], // button 1
-					 joystick_0[3], // right
-					 joystick_0[0], // down
-					 joystick_0[2], // left
-					 joystick_0[1]  // up
-				};
-			end
-				mod_insector:
-				begin
-				IP1710 <= { // IN1
-					 1'b0,
-					 ~status[6],
-					joystick_1[9],
-					joystick_1[8],
-					 1'b0,//joystick_0[6], // coin 2
-					joystick_0[7], // coin 1
-					joystick_0[9],
-					joystick_0[8]
+    mod_curvebal:
+    begin
+      IP1710 <= {
+        2'b0,
+        1'b0, // p2
+        1'b0,//joystick_0[6],
+        1'b0,// coin 2
+        joystick_0[7], // coin 1
+        joystick_0[8], // test 1
+        ~status[6],    // test 2
+      };
 
-			};
+      IP4740 <= {
+        1'b0, // n/a
+        joystick_0[9], // bunt
+        1'b0, // n/a
+        joystick_0[11], // pitch right
+        1'b0, // n/a
+        joystick_0[10], // pitch left
+        joystick_0[4], // swing
+        1'b0
+      };
+    end
 
-				IP4740 <= { // IN4
+    mod_tylz:
+    begin
+      IP1710 <= { // IN1
+        4'b0,
+        joystick_0[7], // coin 1
+        1'b0,//joystick_0[6], // coin 2
+        joystick_0[4], // test 1
+        ~status[6]
 
-					 joystick_1[1],
-					 joystick_1[2],
-					 joystick_1[0],
-					 joystick_1[3],
+      };
+
+      IP4740 <= { // IN4
+        1'b0,
+        joystick_0[6], // p2
+        joystick_0[5],  // p1
+
+        joystick_0[8], // button 1
+        joystick_0[3], // right
+        joystick_0[0], // down
+        joystick_0[2], // left
+        joystick_0[1]  // up
+      };
+    end
+    mod_insector:
+    begin
+      IP1710 <= { // IN1
+        1'b0,
+        ~status[6],
+        joystick_1[9],
+        joystick_1[8],
+        1'b0,//joystick_0[6], // coin 2
+        joystick_0[7], // coin 1
+        joystick_0[9],
+        joystick_0[8]
+
+      };
+
+      IP4740 <= { // IN4
+
+        joystick_1[1],
+        joystick_1[2],
+        joystick_1[0],
+        joystick_1[3],
 
 
-					 joystick_0[1],
-					 joystick_0[2],
-					 joystick_0[0],
-					 joystick_0[3]
-				};
-				end
-			default:
-			begin
-			end
-		 endcase
+        joystick_0[1],
+        joystick_0[2],
+        joystick_0[0],
+        joystick_0[3]
+      };
+    end
+    default:
+    begin
+    end
+  endcase
 end
 
 wire [7:0] audio;
@@ -523,12 +531,12 @@ ma216_board ma216_board(
 reg [2:0]fx;
 always @(posedge clk_25)
 begin
-	fx <= status[17:15];
+  fx <= status[17:15];
 end
 
 
 
-wire rotate_ccw = 1'b1;
+wire rotate_ccw = ~status[11];
 wire no_rotate = status[5] | (mod==mod_tylz) | (mod==mod_insector) | direct_video;
 //wire scandoubler = (status[17:15] || forced_scandoubler);
 screen_rotate screen_rotate (.*);
