@@ -28,7 +28,9 @@ module mylstar_board
 
   input rom_init,
   input [17:0] rom_init_address,
-  input [7:0] rom_init_data
+  input [7:0] rom_init_data,
+  
+  input flip
 );
 
 
@@ -80,8 +82,8 @@ wire nWR = B4_Y[0];
 wire nBRWR = F6_6;
 wire nFRWR = F6_3;
 wire BANK_SEL = A8[4];
-wire VERTFLOP = A8[2];
-wire HORIZFLIP = A8[1];
+wire VERTFLOP = flip ? ~A8[2]: A8[2];
+wire HORIZFLIP = flip ? ~A8[1]: A8[1];
 wire FB_PRIORITY = A8[0];
 wire BLANK = J12_1;
 wire HBLANK = K17_Q[0];

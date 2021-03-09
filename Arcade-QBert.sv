@@ -508,7 +508,9 @@ mylstar_board mylstar_board
 
   .rom_init(rom_init),
   .rom_init_address(ioctl_addr),
-  .rom_init_data(ioctl_dout)
+  .rom_init_data(ioctl_dout),
+  
+  .flip(status[11])
 );
 
 // audio board
