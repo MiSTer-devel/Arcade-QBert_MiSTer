@@ -1,13 +1,7 @@
 ![QBert Character](./qbert.png) MiSTer Q*Bert
 =============================================
 
-Q*Bert arcade core for MiSTer FPGA. It's a reproduction of the original PCBs with the following exceptions:
-
-- I removed D2 to D4 multiplexers because FG POS/ID registers E1-2, E2-3 & E4 are now dual port RAM.
-- I removed D5 to D7 multiplexers because BG character RAM E7 is dual port.
-- I removed D8 to D10 multiplexers because E10-11 buffer RAM is dual port.
-- I removed E8/E9-10 bus isolation because of dual port E7 & E10-11.
-- I removed H13 mux because color RAM G13 to G14 is dual port.
+Q*Bert arcade core for MiSTer FPGA by Pierco. It's a reproduction of the original PCBs rather than a reinterpretation but with some dual port RAM exceptions.
 
 Additional details
 ------------------
@@ -30,18 +24,22 @@ Additional details
 Game Compatibility List
 -----------------------
 
+Working:
+
 - QBert: 100% compatible.
-- QBert Qubes: 100% compatible, bug on rolling cube screen and dip switches inverted.
+- QBert Qubes: 100% compatible.
+- Mad Planets: 100% compatible.
+
+Not working yet:
+
 - Curve Ball: dip switch order is weird, no sound.
 - Insector: 100% compatible, dip switch problems, controller inverted & no test mode(?).
-- Mad Planets: 100% compatible but blinking letters.
 - Tyls: 100% compatible - dip switches inverted.
-
-...so to summarize, with the exception of QBert, don't expect another game to work properly.
 
 Known Bugs
 ----------
 
+- QBert Qubes: "Supreme Nosers" screen works only after a reset.
 - Problem with vertical position register E1-2. When a new object is falling from the top of the screen (ball), it appears briefly at the bottom of the screen.
 - High Scores screen: the big three letters of player's name are not displayed correctly. It works well after a few resets (is it a problem with bus sharing logic which sends zeros to simulate high impedance for ORing outputs?). I don't have the PCB so it's difficult to know the original behavior.
 - Votrax chip is cruelly missing, QBert needs his @!#?@! voice!!!
