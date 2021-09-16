@@ -252,14 +252,15 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 // XTAL = 15M
 // CPU_CLK from 8284 = 5M
 
-wire clk_sys, clk_40, clk_25;
+wire clk_sys, clk_40, clk_25, core_clk;
 pll pll
 (
   .refclk(CLK_50M),
   .rst(0),
   .outclk_0(clk_sys), // 50Mhz mostly used for bram & sound
   .outclk_1(clk_40),   // rotation 40MHz + video 10MHz & 5MHz
-  .outclk_2(clk_25)
+  .outclk_2(clk_25),
+  .outclk_3(core_clk)
 );
 
 reg [3:0] cnt1;
@@ -493,7 +494,7 @@ mylstar_board mylstar_board
   .CLK(clk_10),
   .CLK5(clk_5),
 
-  .CPU_CORE_CLK(clk_sys),
+  .CPU_CORE_CLK(core_clk),
   .CPU_CLK(cpu_clk),
 
   .red(red),

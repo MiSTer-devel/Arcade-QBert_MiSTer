@@ -71,7 +71,7 @@ wire G8_nQ1, G8_Q1, G8_nQ2;
 wire [7:0] K4_D, K5_D, K6_D, K7_8_D, G10_Ao, G10_Bo, G11_Q;
 wire L4_5_Q, L5_6_Q, L6_7_Q, L7_8_Q;
 wire [3:0] K9_Y, K10_Y, K11_Y, G12_Y, G13_Q, G14_Q, G15_Q;
-wire [7:0] E7_Q, E8_Ao, E8_Bo, E9_10_Bo, E10_11_Q, D11_Q, D12_Y, E11_12_Q, E13_Q;
+wire [7:0] E7_Q, E8_Ao, E8_Bo, E9_10_Bo, E10_11_Q, D11_Q, D12_Y, E11_12_Q;
 
 wire nCOLSEL = B7_2Y[2];
 wire nBOJRSEL1 = B5_3;
@@ -135,7 +135,7 @@ i8088 B1(
   .RESET(reset),
   .READY(1'b1),
   .INTR(0),
-  .NMI(VBLANK),
+  .NMI(VSync),
   .addr(addr),
   .dout(cpu_dout),
   .din(cpu_din),
@@ -329,11 +329,58 @@ x74139 D1(
 );
 
 // D3 & D4 removed because of DPRAM E1_2 to E4
-// D5 to D10 mux removed because of DPRAM (E7 & E10_11)
+
+x74157 D5(
+  .A({ nRD1, nBRWR, addr[9:8] }),
+  .B({ 1'b0, 1'b1, F16_Q[2:1] }),
+  .s(SBBW),
+  .en(1'b0),
+  .Y(D5_Y)
+);
+
+x74157 D6(
+  .A(addr[7:4]),
+  .B({ F16_Q[0], H[7:5] }),
+  .s(SBBW),
+  .en(1'b0),
+  .Y(D6_Y)
+);
+
+x74157 D7(
+  .A(addr[3:0]),
+  .B(H[4:1]),
+  .s(SBBW),
+  .en(1'b0),
+  .Y(D7_Y)
+);
+
+x74157 D8(
+  .A(HH[6:3]),
+  .B(D7_Y),
+  .s(SBBW),
+  .en(1'b0),
+  .Y(D8_Y)
+);
+
+x74157 D9(
+  .A({ VV[5:3], HH[7] }),
+  .B(D6_Y),
+  .s(SBBW),
+  .en(1'b0),
+  .Y(D9_Y)
+);
+
+x74157 D10(
+  .A({ 1'b1, VV[7:6] }),
+  .B({ nH0 , D5_Y[1:0] }),
+  .s(SBBW),
+  .en(1'b0),
+  .Y(D10_Y)
+);
 
 x74374 D11(
   .clk(G16_Q[1]),
-  .D({ E10_11_Q[6:0], VV[2] }),
+  .D({ E9_10_Bo[6:0]|E10_11_Q[6:0], VV[2] }),
   .Q(D11_Q),
   .OE(F15_10)
 );
@@ -426,33 +473,43 @@ x74283 E5(
 // E6
 wire E6_8 = ~(nVBLANK & HBLANK & (&E5_S));
 
-wire [7:0] E7_doutb;
-dpram #(.addr_width(10),.data_width(8)) E7(
+ram #(.addr_width(10),.data_width(8)) E7(
   .clk(clk_sys),
-  .addr({ F16_Q[2:0], H[7:1] }),
-  .dout(E7_Q),
-  .ce(1'b0),
-  .oe(1'b0),
-  .we(~nBRWR),
-  .waddr(addr[9:0]),
-  .wdata(cpu_dout[7:0]),
-  .doutb(E7_doutb)
+  .din(cpu_dout),
+  .Q(E7_Q),
+  .addr({ D5_Y[1:0], D6_Y, D7_Y }),
+  .wr(D5_Y[2]),
+  .oe(D5_Y[3]),
+  .cs(1'b0)
 );
 
-// E8 & E9_10 removed because of DPRAM (E7 & E10_11)
-assign E8_Ao = ~nBRSEL & ~nRD1 ? E7_doutb : 8'd0;
+x74245 E8(
+  .Ai(cpu_dout),
+  .Ao(E8_Ao),
+  .Bi(E7_Q),
+  .Bo(E8_Bo),
+  .dir(nRD1),
+  .G(J8_8)
+);
 
-dpram #(.addr_width(10),.data_width(8)) E10_11(
+x74245 E9_10(
+  // bus isolation
+  // Ai->Bo only
+  .Ai(E8_Bo|E7_Q),
+  .Bo(E9_10_Bo),
+  .dir(1'b1),
+  .G(K15_8)
+);
+
+ram #(.addr_width(11),.data_width(8)) E10_11(
   .clk(clk_sys),
-  .addr({ VV[7:3], HH[7:3] }),
-  .ce(1'b0),
+  .din(E9_10_Bo),
+  .Q(E10_11_Q),
+  .addr({ D10_Y[1:0], D9_Y, D8_Y }),
+  .wr(D10_Y[2]),
   .oe(nVHBLANK),
-  .we(~nH0),
-  .waddr({ F16_Q[2:0], H[7:1] }),
-  .wdata(E7_Q),
-  .dout(E10_11_Q)
+  .cs(1'b0)
 );
-
 reg [12:0] E11_12_addr;
 always @(posedge clk_sys) E11_12_addr <= { L10_Q1, D11_Q|D12_Y, D13_Y };
 dpram  #(.addr_width(13),.data_width(8)) E11_12 (
@@ -460,7 +517,6 @@ dpram  #(.addr_width(13),.data_width(8)) E11_12 (
   .addr(E11_12_addr),
   .dout(E11_12_Q),
   .ce(1'b0),
-  //.ce(L10_Q1),
   .oe(1'b0),
   .we(rom_init & rom_init_address < 18'h2000),
   .waddr(rom_init_address),
@@ -516,6 +572,7 @@ x74161 F16(
 // F17
 wire F17_6 = 1'b1 ^ G16_Q[4];
 wire F17_8 = F15_8 ^ G16_Q[4];
+wire F17_11 = 1'b1 ^ HH[0];
 
 x74157 G1(
   .A(E1_2_Q[7:4]),
@@ -598,17 +655,17 @@ x74157 G9(
 );
 
 x74245 G10(
-  .Ai(cpu_dout[7:0]),
+  //.Ai(cpu_dout[7:0]), if RAM at E11/12/13
   .Ao(G10_Ao),
-  .Bi(E11_12_Q|E13_Q),
-  .Bo(G10_Bo),
+  .Bi(E11_12_Q),
+  //.Bo(G10_Bo),
   .dir(nRD1),
   .G(nBOJRSEL1)
 );
 
 x74374 G11(
-  .clk(~HH[0]),
-  .D(E11_12_Q|E13_Q),//|G10_Bo),
+  .clk(F17_11),
+  .D(E11_12_Q),
   .Q(G11_Q),
   .OE(1'b0)
 );
