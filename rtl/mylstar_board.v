@@ -20,6 +20,7 @@ module mylstar_board
 
   input   [7:0] IP1710,
   input   [7:0] IP4740,
+  input   [7:0] IPA1J2,
   output  [5:0] OP2720,
   output  [4:0] OP3337,
   output  [7:0] OP4740,
@@ -115,7 +116,7 @@ wire [7:0] P1_B14 = IP4740;
 
 wire [7:0] ram_dout = C5_Q | C6_Q | C7_Q | C9_10_Q | C8_9_Q | C10_11_Q;
 wire [7:0] rom_dout = C11_12_Q | C12_13_Q | C13_14_Q | C14_15_Q | C16_Q;
-wire [7:0] cpu_din = ram_dout | rom_dout | G10_Ao | B11 | B12 | B14 | E8_Ao;
+wire [7:0] cpu_din = ram_dout | rom_dout | G10_Ao | B11 | B12 | B14 | A1J2 | E8_Ao;
 
 // A8
 always @(posedge nWR)
@@ -201,6 +202,8 @@ wire [7:0] B11 = ~B10_Y[1] ? P1_B11 : 8'd0;
 wire [7:0] B12 = ~B10_Y[0] ? dip_switch : 8'd0;
 
 wire [7:0] B14 = ~B10_Y[4] ? P1_B14 : 8'd0;
+
+wire [7:0] A1J2 = ~B10_Y[2] ? IPA1J2 : 8'd0;
 
 ram #(.addr_width(11),.data_width(8)) C5 (
   .clk(clk_sys),
