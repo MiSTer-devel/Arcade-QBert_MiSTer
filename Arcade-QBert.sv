@@ -213,6 +213,9 @@ wire        ioctl_wait;
 
 wire [15:0] joystick_0;
 wire [15:0] joystick_1;
+wire [15:0] joystick_analog_0;
+
+wire [8:0] spinner_0;
 
 hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 (
@@ -239,7 +242,10 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
   .ioctl_index(ioctl_index),
 
   .joystick_0(joystick_0),
-  .joystick_1(joystick_1)
+  .joystick_1(joystick_1),
+  
+  .joystick_analog_0(joystick_analog_0),
+  .spinner_0(spinner_0)
 );
 
 ///////////////////////   CLOCKS   ///////////////////////////////
@@ -325,9 +331,12 @@ always @(posedge clk_25) if (ioctl_wr & (ioctl_index==1)) mod <= ioctl_dout;
 
 wire [7:0] IP1710;
 wire [7:0] IP4740;
+wire [7:0] IPA1J2;
 
 
 always @(*) begin
+
+  IPA1J2 <= 8'd0;
 
   IP1710 <= {
     joystick_0[4], // test 1
@@ -391,6 +400,9 @@ always @(*) begin
         joystick_0[0],  // down
         joystick_0[3] // left
       };
+      
+      IPA1J2 <= spinner_0[7:0];
+      
     end
 
     mod_krull:
@@ -503,6 +515,7 @@ mylstar_board mylstar_board
 
   .IP1710(IP1710),
   .IP4740(IP4740),
+  .IPA1J2(IPA1J2),
   .OP2720(OP2720),
   .OP3337(),
 
