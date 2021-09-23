@@ -15,7 +15,7 @@ module dpram #(parameter addr_width=16, parameter data_width=8) (
 reg [data_width-1:0] d;
 reg [data_width-1:0] memory[(1<<addr_width)-1:0];
 
-assign dout = ~ce & ~oe ? d : 'h0;
+assign dout = ~ce & ~oe ? d : {data_width{1'b0}};
 
 always @(posedge clk)
   d <= memory[addr];

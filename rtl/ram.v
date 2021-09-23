@@ -11,17 +11,18 @@ module ram
   input cs,
   input oe,
   input wr,
-  output reg [data_width-1:0] Q
+  output [data_width-1:0] Q
 );
 
+assign Q = ~oe & ~cs ? dout : {data_width{1'b0}};
 
 reg [data_width-1:0] memory[(1<<addr_width)-1:0];
+reg [data_width-1:0] dout;
 
 always @(posedge clk) begin
-  Q <= 0;
   if (~cs) begin
-    if (~oe) Q <= memory[addr];
     if (~wr) memory[addr] <= din;
+    else dout <= memory[addr];
   end
 end
 
