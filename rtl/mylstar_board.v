@@ -30,6 +30,7 @@ module mylstar_board
   input rom_init,
   input [17:0] rom_init_address,
   input [7:0] rom_init_data,
+  input [7:0] rom_index,
   
   input vflip,
   input hflip
@@ -214,7 +215,7 @@ wire [7:0] B12 = ~B10_Y[0] ? dip_switch : 8'd0;
 
 wire [7:0] B14 = ~B10_Y[4] ? P1_B14 : 8'd0;
 
-// fill with $ff
+// TODO: load from MRA and fill with $FF if empty
 wire [10:0] nvram_addr = rom_init ? rom_init_address[10:0] : addr[10:0];
 wire [7:0] nvram_din = rom_init ? 8'hff : cpu_dout;
 wire nvram_wr = rom_init ? 1'b0 : B4_Y[0];
