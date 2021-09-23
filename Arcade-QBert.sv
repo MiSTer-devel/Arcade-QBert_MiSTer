@@ -183,6 +183,7 @@ localparam CONF_STR = {
   "O5,Orientation,Vert,Horz;",
   "OFH,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",
   "OB,VFlip,Off,On;",
+//  "OC,HFlip,Off,On;",
   "-;",
   "O6,Test mode,Off,On;",
   "O7,Original column bug,Off,On;",
@@ -524,8 +525,10 @@ mylstar_board mylstar_board
   .rom_init(rom_init),
   .rom_init_address(ioctl_addr),
   .rom_init_data(ioctl_dout),
+  .rom_index(ioctl_index),
   
-  .flip(status[11])
+  .vflip(status[11]),
+  .hflip(1'b0)
 );
 
 // audio board
