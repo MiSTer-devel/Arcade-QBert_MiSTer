@@ -528,7 +528,7 @@ mylstar_board mylstar_board
   .rom_index(ioctl_index),
   
   .vflip(status[11]),
-  .hflip(1'b0)
+  .hflip(status[11])
 );
 
 // audio board
