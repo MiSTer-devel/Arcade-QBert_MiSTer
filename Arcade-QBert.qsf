@@ -13,7 +13,7 @@ set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 
-set_global_assignment -name LAST_QUARTUS_VERSION "17.0.2 Lite Edition"
+set_global_assignment -name LAST_QUARTUS_VERSION "17.1.0 Lite Edition"
 
 set_global_assignment -name GENERATE_RBF_FILE ON
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
@@ -73,4 +73,44 @@ set_global_assignment -name VERILOG_MACRO "MISTER_FB=1"
 source sys/sys.tcl
 source sys/sys_analog.tcl
 source files.qip
+set_global_assignment -name VHDL_FILE rtl/sc01a/sc01a_resamp.vhd
+set_global_assignment -name VHDL_FILE rtl/sc01a/sc01a_rom.vhd
+set_global_assignment -name VHDL_FILE rtl/sc01a/sc01a_filter.vhd
+set_global_assignment -name VHDL_FILE rtl/sc01a/sc01a.vhd
+set_global_assignment -name VHDL_FILE rtl/sc01a/iir_filter_slow.vhd
+set_global_assignment -name VHDL_FILE rtl/sc01a/fx_rom.vhd
+set_global_assignment -name VHDL_FILE rtl/sc01a/fn_rom.vhd
+set_global_assignment -name VHDL_FILE rtl/sc01a/f4_rom.vhd
+set_global_assignment -name VHDL_FILE rtl/sc01a/f3_rom.vhd
+set_global_assignment -name VHDL_FILE rtl/sc01a/f2v_rom.vhd
+set_global_assignment -name VHDL_FILE rtl/sc01a/f1_rom.vhd
+set_global_assignment -name VERILOG_FILE rtl/8088/eu_rom.v
+set_global_assignment -name CDF_FILE jtag.cdf
+set_global_assignment -name QIP_FILE sys/sys.qip
+set_global_assignment -name VERILOG_FILE rtl/dpram.v
+set_global_assignment -name VERILOG_FILE rtl/ram.v
+set_global_assignment -name VERILOG_FILE rtl/mylstar_board.v
+set_global_assignment -name SYSTEMVERILOG_FILE "Arcade-QBert.sv"
+set_global_assignment -name VERILOG_FILE rtl/8088/biu_min.v
+set_global_assignment -name VERILOG_FILE rtl/8088/mcl86_eu_core.v
+set_global_assignment -name VERILOG_FILE rtl/8088/i8088.v
+set_global_assignment -name VERILOG_FILE rtl/ma216_board.v
+set_global_assignment -name VERILOG_FILE rtl/riot.v
+set_global_assignment -name VERILOG_FILE rtl/6502/cpu6502.v
+set_global_assignment -name VERILOG_FILE rtl/6502/ALU.v
+set_global_assignment -name VERILOG_FILE rtl/7400/x74379.v
+set_global_assignment -name VERILOG_FILE rtl/7400/x74374.v
+set_global_assignment -name VERILOG_FILE rtl/7400/x74367.v
+set_global_assignment -name VERILOG_FILE rtl/7400/x74298.v
+set_global_assignment -name VERILOG_FILE rtl/7400/x74283.v
+set_global_assignment -name VERILOG_FILE rtl/7400/x74245.v
+set_global_assignment -name VERILOG_FILE rtl/7400/x74244.v
+set_global_assignment -name VERILOG_FILE rtl/7400/x74189.v
+set_global_assignment -name VERILOG_FILE rtl/7400/x74166.v
+set_global_assignment -name VERILOG_FILE rtl/7400/x74161.v
+set_global_assignment -name VERILOG_FILE rtl/7400/x74157.v
+set_global_assignment -name VERILOG_FILE rtl/7400/x74139.v
+set_global_assignment -name VERILOG_FILE rtl/7400/x74138.v
+set_global_assignment -name VERILOG_FILE rtl/7400/x7474.v
+set_global_assignment -name VERILOG_FILE rtl/sc01.v
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

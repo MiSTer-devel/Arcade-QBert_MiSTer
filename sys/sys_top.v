@@ -1562,6 +1562,8 @@ pll_audio pll_audio
 );
 
 wire spdif;
+
+
 audio_out audio_out
 (
 	.reset(reset | areset),
