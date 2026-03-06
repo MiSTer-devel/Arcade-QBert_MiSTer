@@ -187,8 +187,8 @@ assign VGA_SCALER = 0;
 assign HDMI_BLACKOUT = 0;
 assign HDMI_BOB_DEINT = 0;
 
-assign AUDIO_S = 0;
-assign AUDIO_MIX = 0;
+assign AUDIO_S = 1;
+assign AUDIO_MIX = 3;
 
 assign LED_USER  = ioctl_download;
 assign LED_DISK = 0;
@@ -520,11 +520,12 @@ always @(*) begin
   endcase
 end
 
-wire [7:0] audio;
+wire [15:0] audio_votrax;
+wire [15:0] audio_dac;
 wire [7:0] red, green, blue;
 
-assign AUDIO_L = { audio, 8'd0 };
-assign AUDIO_R = { audio, 8'd0 };
+assign AUDIO_L = audio_votrax;
+assign AUDIO_R = audio_dac;
 
 wire rom_init = ioctl_download && (ioctl_index==0);
 
@@ -566,7 +567,8 @@ ma216_board ma216_board(
   .clk_sys(clk_sys),
   .reset(reset),
   .IP2720(OP2720),
-  .audio(audio),
+  .audio_votrax(audio_votrax),
+  .audio_dac(audio_dac),
   .rom_init(rom_init),
   .rom_init_address(ioctl_addr),
   .rom_init_data(ioctl_dout)

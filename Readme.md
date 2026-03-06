@@ -8,7 +8,10 @@ Additional details
 
 **Audio board MA216:**
 
-- SC01 is not implemented. Waiting for brave people to do it.
+- SC01-A is implemented in `rtl/sc01a/` — an FPGA recreation of the Votrax SC01-A phoneme
+  speech synthesizer, based on the MAME simulation by Olivier Galibert (BSD-3-Clause).
+  Six IIR biquad filters driven by a glottal/noise source, with all coefficients pre-computed
+  as static ROM tables. See [rtl/sc01a/README.md](rtl/sc01a/README.md) for details.
 
 **NVRAM:**
 
@@ -42,4 +45,4 @@ Known Bugs
 - QBert Qubes: "Supreme Nosers" screen works only after a reset.
 - Problem with vertical position register E1-2. When a new object is falling from the top of the screen (ball), it appears briefly at the bottom of the screen.
 - High Scores screen: the big three letters of player's name are not displayed correctly. It works well after a few resets (is it a problem with bus sharing logic which sends zeros to simulate high impedance for ORing outputs?). I don't have the PCB so it's difficult to know the original behavior.
-- Votrax chip is cruelly missing, QBert needs his @!#?@! voice!!!
+- Votrax SC01-A is now implemented — Q*Bert has his @!#?@! voice!
