@@ -454,12 +454,13 @@ sound_stream::sample_t votrax_sc01_device::analog_calc()
 	int32_t n2 = fp_scale15(n, m_filt_fc);
 	shift_hist(n2, m_noise_3);
 
-	// 8. F2 noise injection: neutralized → output = 0
-	shift_hist(0, m_noise_4);
+	// 8. Apply the f2 noise filter (f2n_rom, same address as f2v)
+	int32_t n3 = apply_filter(m_noise_3, m_noise_4, f2n_rom, m_f2v_addr);
+	shift_hist(n3, m_noise_4);
 
 	// Mixed path.
 	// 9. Add the f2 voice and f2 noise outputs
-	int32_t vn = v; // + 0 (f2n neutralized)
+	int32_t vn = v + n3;
 	shift_hist(vn, m_vn_1);
 
 	// 10. Apply the f3 filter

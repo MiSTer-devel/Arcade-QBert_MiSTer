@@ -21,6 +21,31 @@ Noise:  ±0.5    → scale(fa) → FN → scale(fc) → (F2N=0) ──┤
                 mix → F3 → +noise_inj → F4 → scale(closure) → FX → out
 ```
 
+## Filter Coefficients
+
+IIR filter coefficients are precomputed using a prewarped bilinear transform.
+Due to the fixed clock ratio (`sclock = mainclock/18`, `cclock = mainclock/36`),
+the normalized peak frequencies `fpeak/Nyquist` are clock-independent — so the
+coefficients are constant regardless of the actual oscillator frequency and can
+be stored as fixed ROMs.
+
+Coefficients are verified stable (all poles strictly inside the unit circle)
+across all filter parameter combinations. The coefficient range fits within
+signed 2.15 fixed-point format.
+
+Based on the MAME SC-01A implementation by Olivier Galibert (BSD-3-Clause),
+with the following adaptations:
+- Prewarping applied consistently to all filters including the noise shaper (FN)
+- ROM generator verified against MAME reference output
+
+### F2N (noise injection filter)
+
+A noise injection path at the F2 output is present in the original hardware.
+The F2N filter implementation (`build_injection`) required non-standard sign
+handling to guarantee stability across all Q/F parameter combinations, as the
+denominator sign varies with the operating point. F2N is disabled by default
+pending further verification against real hardware recordings.
+
 ## Resource Usage
 
 sc01a.vhd was synthesized with Quartus Lite 17.1 (no pin assignments; only a 50 MHz test clock) to evaluate resource usage.
@@ -131,3 +156,4 @@ g++ -O2 -o gen_votrax_roms gen_votrax_roms.cpp -lm
 ./gen_votrax_roms
 # writes f1_rom.vhd, f2v_rom.vhd, f3_rom.vhd, f4_rom.vhd, fn_rom.vhd, fx_rom.vhd and votrax_rom_tables.h to /tmp/
 ```
+

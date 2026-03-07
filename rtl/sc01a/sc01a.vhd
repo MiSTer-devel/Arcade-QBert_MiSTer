@@ -13,7 +13,6 @@
 --   - All arithmetic in s(2.15) fixed-point (no floating point)
 --   - Filter coefficients pre-computed as static ROM tables
 --   - IIR filters implemented as sequential state machines
---   - FN filter DC stabilization via pole displacement
 --   - Clock rate derived from CLK_HZ generic (tested at 50 MHz)
 --   - Designed for FPGA synthesis (Quartus/Intel)
 --
@@ -27,8 +26,9 @@ use ieee.numeric_std.all;
 
 entity sc01a is
     generic (
-        CLK_HZ : integer := 50_000_000; -- system clock frequency
-        ENABLE_RESAMPLER : integer := 1
+        CLK_HZ           : integer := 50_000_000; -- system clock frequency
+        ENABLE_RESAMPLER : integer := 1;
+        ENABLE_F2N       : boolean := false        -- F2N injection filter
     );
     port (
         -- System
@@ -123,6 +123,8 @@ architecture rtl of sc01a is
     signal rom_data_fx : signed(17 downto 0);
     signal rom_addr_fn : unsigned(2 downto 0);
     signal rom_data_fn : signed(17 downto 0);
+    signal rom_addr_f2n : unsigned(11 downto 0);
+    signal rom_data_f2n : signed(17 downto 0);
 
     signal rom_duration : unsigned(6 downto 0) := (others => '0');
 
@@ -136,7 +138,7 @@ architecture rtl of sc01a is
     -- ================================================================
     -- Resampler
     -- ================================================================
-    signal audio_48k : signed(15 downto 0);
+    signal audio_48k : signed(17 downto 0);
     signal audio_48k_valid : std_logic;
 
     -- ================================================================
@@ -147,7 +149,7 @@ architecture rtl of sc01a is
     signal ticks_done : std_logic := '0';
     signal stb_prev : std_logic := '0';
 
-    -- 2-FF synchronizer for stb (CDC: sound_clk → clk_sys)
+    -- 2-FF synchronizer for stb for possible CDC
     signal stb_sync : std_logic_vector(1 downto 0) := "00";
 
     function interpolate(
@@ -183,11 +185,14 @@ begin
         port map(clk => clk, addr => rom_addr_fx, data => rom_data_fx);
     u_fn_rom : entity work.fn_rom
         port map(clk => clk, addr => rom_addr_fn, data => rom_data_fn);
+    u_f2n_rom : entity work.f2n_rom
+        port map(clk => clk, addr => rom_addr_f2n, data => rom_data_f2n);
 
     -- ================================================================
     -- Filter pipeline
     -- ================================================================
     u_filter : entity work.sc01a_filter
+        generic map(ENABLE_F2N => ENABLE_F2N)
         port map(
             clk => clk,
             reset_n => reset_n,
@@ -207,6 +212,7 @@ begin
             rom_addr_f4 => rom_addr_f4, rom_data_f4 => rom_data_f4,
             rom_addr_fx => rom_addr_fx, rom_data_fx => rom_data_fx,
             rom_addr_fn => rom_addr_fn, rom_data_fn => rom_data_fn,
+            rom_addr_f2n => rom_addr_f2n, rom_data_f2n => rom_data_f2n,
             sample_out => filt_sample,
             done => filt_done
         );
@@ -218,20 +224,20 @@ begin
     -- ================================================================
     RESAMPLER : if ENABLE_RESAMPLER = 1 generate
         u_resamp : entity work.sc01a_resamp
-            generic map(CLK_HZ => CLK_HZ)
+            generic map(CLK_HZ => CLK_HZ, SAMPLE_BITS => 18)
             port map(
                 clk => clk,
                 reset_n => reset_n,
-                s_in => filt_sample(17 downto 2),
+                s_in => filt_sample,
                 s_valid => filt_done,
                 clk_dac => clk_dac,
                 s_out => audio_48k,
                 s_out_valid => audio_48k_valid
             );
 
-        audio_out <= gain_3db(resize(audio_48k, 18))(17 downto 2);
+        audio_out <= gain_3db(audio_48k)(17 downto 2);
         audio_valid <= audio_48k_valid;
-        audio_out_u <= std_logic_vector(audio_48k + x"8000");
+        audio_out_u <= std_logic_vector(audio_48k(17 downto 2) + x"8000");
     end generate RESAMPLER;
 
     NO_RESAMPLER : if ENABLE_RESAMPLER = 0 generate
@@ -293,7 +299,7 @@ begin
     end process;
 
     -- ================================================================
-    -- 2-FF synchronizer for stb (CDC: sound_clk → clk_sys)
+    -- 2-FF synchronizer for stb for possible CDC
     -- ================================================================
     process (clk)
     begin
