@@ -23,7 +23,8 @@ use ieee.numeric_std.all;
 
 entity sc01a_filter is
     generic (
-        SIM_FILTER : boolean := false -- true = instant filter, false = real BRAM filter
+        SIM_FILTER        : boolean := false; -- true = instant filter, false = real BRAM filter
+        ENABLE_F2N        : boolean := false  -- true = F2N injection filter active
     );
 
     port (
@@ -60,6 +61,8 @@ entity sc01a_filter is
         rom_data_fx : in signed(17 downto 0);
         rom_addr_fn : out unsigned(2 downto 0);
         rom_data_fn : in signed(17 downto 0);
+        rom_addr_f2n : out unsigned(11 downto 0);
+        rom_data_f2n : in signed(17 downto 0);
 
         -- Output
         sample_out : out signed(17 downto 0);
@@ -115,6 +118,7 @@ architecture rtl of sc01a_filter is
 
     signal f1 : filt_sig_t;
     signal f2v : filt_sig_t;
+    signal f2n : filt_sig_t;
     signal fn : filt_sig_t;
     signal f3 : filt_sig_t;
     signal f4 : filt_sig_t;
@@ -128,6 +132,7 @@ architecture rtl of sc01a_filter is
         S_WAIT_F2V,
         S_WAIT_FN,
         S_SCALE_FC,
+        S_WAIT_F2N,
         S_WAIT_F3,
         S_NOISE_INJ,
         S_START_F4,
@@ -188,6 +193,14 @@ begin
             rom_addr => f4.rom_addr, rom_data => f4.rom_data,
             y_out => f4.y_out, done => f4.done);
 
+    u_f2n : entity work.iir_filter_slow
+        generic map(N_X => 2, N_Y => 2)
+        port map(
+            clk => clk, reset_n => reset_n,
+            start => f2n.start, x_in => f2n.x_in,
+            rom_addr => f2n.rom_addr, rom_data => f2n.rom_data,
+            y_out => f2n.y_out, done => f2n.done);
+
     u_fx : entity work.iir_filter_slow
         generic map(N_X => 2, N_Y => 2)
         port map(
@@ -205,9 +218,11 @@ begin
     rom_addr_f4 <= f4.rom_addr;
     rom_addr_fx <= fx.rom_addr;
     rom_addr_fn <= fn.rom_addr;
+    rom_addr_f2n <= f2v_addr or resize(f2n.rom_addr, 12);
     f1.rom_data <= rom_data_f1;
     f2v.rom_data <= rom_data_f2v;
     fn.rom_data <= rom_data_fn;
+    f2n.rom_data <= rom_data_f2n;
     f3.rom_data <= rom_data_f3;
     f4.rom_data <= rom_data_f4;
     fx.rom_data <= rom_data_fx;
@@ -227,6 +242,7 @@ begin
                 done <= '0';
                 f1.start <= '0';
                 f2v.start <= '0';
+                f2n.start <= '0';
                 fn.start <= '0';
                 f3.start <= '0';
                 f4.start <= '0';
@@ -235,6 +251,7 @@ begin
                 -- Default: clear start pulses
                 f1.start <= '0';
                 f2v.start <= '0';
+                f2n.start <= '0';
                 fn.start <= '0';
                 f3.start <= '0';
                 f4.start <= '0';
@@ -304,14 +321,29 @@ begin
                         end if;
 
                         -- ------------------------------------------------
-                        -- Scale noise by filt_fc, mix, fire F3
-                        -- f2n neutralized → vn = v_sig only
+                        -- Scale noise by filt_fc → fire F2N (if enabled)
+                        -- or pass v_sig directly to F3
                         -- ------------------------------------------------
                     when S_SCALE_FC =>
-                        vn_sig <= v_sig; -- f2n = 0
-                        f3.x_in <= v_sig;
-                        f3.start <= '1';
-                        state <= S_WAIT_F3;
+                        if ENABLE_F2N then
+                            f2n.x_in <= fp_scale15(n_sig, filt_fc);
+                            f2n.start <= '1';
+                            state <= S_WAIT_F2N;
+                        else
+                            f3.x_in <= v_sig;
+                            f3.start <= '1';
+                            state <= S_WAIT_F3;
+                        end if;
+
+                        -- ------------------------------------------------
+                        -- F2N done → mix v + f2n, fire F3
+                        -- ------------------------------------------------
+                    when S_WAIT_F2N =>
+                        if f2n.done = '1' then
+                            f3.x_in <= v_sig + f2n.y_out;
+                            f3.start <= '1';
+                            state <= S_WAIT_F3;
+                        end if;
 
                         -- ------------------------------------------------
                         -- F3 done → noise injection

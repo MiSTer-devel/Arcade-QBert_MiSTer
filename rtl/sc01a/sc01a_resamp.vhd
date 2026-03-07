@@ -25,15 +25,16 @@ use ieee.numeric_std.all;
 
 entity sc01a_resamp is
     generic (
-        CLK_HZ : integer := 40_000_000
+        CLK_HZ      : integer := 40_000_000;
+        SAMPLE_BITS : integer := 16
     );
     port (
         clk : in std_logic;
         reset_n : in std_logic;
-        s_in : in signed(15 downto 0);
+        s_in : in signed(SAMPLE_BITS-1 downto 0);
         s_valid : in std_logic;
         clk_dac : in std_logic_vector(7 downto 0); -- replaces speech_clock
-        s_out : out signed(15 downto 0);
+        s_out : out signed(SAMPLE_BITS-1 downto 0);
         s_out_valid : out std_logic
     );
 end entity;
@@ -151,16 +152,16 @@ architecture rtl of sc01a_resamp is
     signal phase_48k : unsigned(32 downto 0) := (others => '0');
     signal tick_48k : std_logic := '0';
 
-    signal sample_prev : signed(15 downto 0) := (others => '0');
-    signal sample_curr : signed(15 downto 0) := (others => '0');
+    signal sample_prev : signed(SAMPLE_BITS-1 downto 0) := (others => '0');
+    signal sample_curr : signed(SAMPLE_BITS-1 downto 0) := (others => '0');
 
     signal interp_phase : unsigned(15 downto 0) := (others => '0');
     signal phase_inc : unsigned(15 downto 0) := to_unsigned(29792, 16);
 
     -- Pipeline stage 1 registers
-    signal p1_diff : signed(16 downto 0) := (others => '0');
+    signal p1_diff : signed(SAMPLE_BITS downto 0) := (others => '0');
     signal p1_phase : unsigned(15 downto 0) := (others => '0');
-    signal p1_sample_prev : signed(15 downto 0) := (others => '0');
+    signal p1_sample_prev : signed(SAMPLE_BITS-1 downto 0) := (others => '0');
     signal p1_valid : std_logic := '0';
 
 begin
@@ -221,7 +222,7 @@ begin
                 end if;
 
                 if tick_48k = '1' then
-                    p1_diff <= resize(sample_curr, 17) - resize(sample_prev, 17);
+                    p1_diff <= resize(sample_curr, SAMPLE_BITS+1) - resize(sample_prev, SAMPLE_BITS+1);
                     p1_phase <= next_phase;
                     p1_sample_prev <= sample_prev;
                     p1_valid <= '1';
@@ -234,9 +235,11 @@ begin
     end process;
 
     -- Pipeline Stage 2: multiply + add → output
+    -- p1_diff is SAMPLE_BITS+1 bits, p1_phase is 17 bits (signed) → product is SAMPLE_BITS+18 bits
+    -- p1_phase represents fraction in Q15 (0..32767), so shift right 15 to get SAMPLE_BITS bits
     process (clk)
-        variable interp : signed(33 downto 0);
-        variable result : signed(15 downto 0);
+        variable interp : signed(SAMPLE_BITS+17 downto 0);
+        variable result : signed(SAMPLE_BITS-1 downto 0);
     begin
         if rising_edge(clk) then
             if reset_n = '0' then
@@ -246,7 +249,7 @@ begin
                 s_out_valid <= '0';
                 if p1_valid = '1' then
                     interp := p1_diff * signed('0' & p1_phase);
-                    result := p1_sample_prev + interp(30 downto 15);
+                    result := p1_sample_prev + interp(SAMPLE_BITS+14 downto 15);
                     s_out <= result;
                     s_out_valid <= '1';
                 end if;
