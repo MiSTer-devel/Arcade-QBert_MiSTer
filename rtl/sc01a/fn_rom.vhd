@@ -24,7 +24,8 @@ architecture rtl of fn_rom is
         to_signed(      0, 18),  -- [   2] a1 = +0.000000
         to_signed(  -3717, 18),  -- [   3] a2 = -0.113434
         to_signed(      0, 18),  -- [   4] a3 = +0.000000
-        to_signed( -54543, 18),  -- [   5] b1 = -1.664520
+--        to_signed( -54543, 18),  -- [   5] b1 = -1.664520 - with fixed point instabil -> DC drift
+        to_signed( -54500, 18),  -- [   5] b1 = -1.663208
         to_signed(  21775, 18),  -- [   6] b2 = +0.664520
         to_signed(      0, 18)   -- [   7] b3 = +0.000000
     );
