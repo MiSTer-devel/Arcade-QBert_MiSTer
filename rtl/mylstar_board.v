@@ -109,7 +109,7 @@ wire RDY1 = J9_8;
 wire [8:0] H = { K17_Q[0], J17_Q, J16_Q };
 wire [7:0] HH = { G17_Q[4:0], G16_Q[5:3] };
 wire [7:0] VV = { D15_8, D15_6, D15_3, D15_11, E15_8, E15_6, E15_11, E15_3 };
-wire nHH0s = F15_12;
+wire nHH0s = ~G16_Q[3];
 wire nH0 = F15_4;
 wire nVV0 = K15_10;
 
@@ -501,7 +501,7 @@ wire E17_8 = ~(&D17_Q);
 x74283 F5(
   .A(E4_Q[3:0]),
   .B(VV[3:0]),
-  .C0(1'b0),
+  .C0(VERTFLOP),
   .S(F5_S),
   .C4(F5_C4)
 );
