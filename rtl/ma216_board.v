@@ -89,12 +89,15 @@ always @(posedge clk)
 always @(posedge clk)
 	 if (~U4_O[2]) inflection_reg <= DBo[7:6];
 
+always @(posedge clk)
+    stb <= ~U4_O[2] & WE;
+	 
 sc01a #(.CLK_HZ(50_000_000), .ENABLE_RESAMPLER(0)) U14(
     .clk(clk_sys),
     .reset_n(~reset),
     .p(~DBo[5:0]),
     .inflection(inflection_reg),
-    .stb(~U4_O[2] & WE),
+    .stb(stb),
     .ar(U14_AR),
     .clk_dac(U11_18),
     .audio_out_u(),
