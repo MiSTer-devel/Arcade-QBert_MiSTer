@@ -94,7 +94,7 @@ sc01a #(.CLK_HZ(50_000_000), .ENABLE_RESAMPLER(0)) U14(
     .reset_n(~reset),
     .p(~DBo[5:0]),
     .inflection(inflection_reg),
-    .stb(U4_O[2]),
+    .stb(~U4_O[2] & WE),
     .ar(U14_AR),
     .clk_dac(U11_18),
     .audio_out_u(),
