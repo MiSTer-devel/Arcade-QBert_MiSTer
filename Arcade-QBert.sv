@@ -354,19 +354,26 @@ localparam mod_krull    = 3;
 localparam mod_curvebal = 4;
 localparam mod_tylz = 5;
 localparam mod_insector = 6;
+localparam mod_reactor = 7;
 
 reg [7:0] mod = 255;
 always @(posedge clk_25) if (ioctl_wr & (ioctl_index==1)) mod <= ioctl_dout;
+
+// Register reactor flag to break potential long combinatorial path
+reg reactor_r;
+always @(posedge clk_sys) reactor_r <= (mod == mod_reactor);
 
 
 wire [7:0] IP1710;
 wire [7:0] IP4740;
 wire [7:0] IPA1J2;
+reg  [7:0] IPA1J2_Y;
 
 
 always @(*) begin
 
-  IPA1J2 <= 8'd0;
+  IPA1J2   <= 8'd0;
+  IPA1J2_Y <= 8'd0;
 
   IP1710 <= {
     joystick_0[4], // test 1
@@ -514,6 +521,39 @@ always @(*) begin
         joystick_0[3]
       };
     end
+    mod_reactor:
+    begin
+      IP1710 <= { // IN1: service inputs
+        4'b0,
+        joystick_0[7], // coin 1
+        1'b0,
+        1'b1,          // service mode dip (active LOW, 1=normal/off)
+        ~status[6]     // test/service
+      };
+
+      // IN2: trackball H (game X = right/left)
+      IPA1J2 <= joystick_analog_0[7:0] ? joystick_analog_0[7:0] :
+                joystick_0[0] ? 8'h04 :  // right = +X
+                joystick_0[1] ? 8'hfc :  // left  = -X
+                8'h00;
+
+      // IN3: trackball V (game Y = up/down)
+      IPA1J2_Y <= spinner_0[7:0] ? spinner_0[7:0] :
+                  joystick_0[3] ? 8'hfc :  // up   = -Y
+                  joystick_0[2] ? 8'h04 :  // down = +Y
+                  8'h00;
+
+      IP4740 <= { // IN4: buttons and start
+        2'b0,
+        joystick_0[6], // coin 2
+        joystick_0[7], // coin 1 (also in IP1710)
+        joystick_0[4], // button 1 (fire)
+        joystick_0[5], // button 2
+        joystick_0[6], // start 2P
+        joystick_0[5]  // start 1P
+      };
+    end
+
     default:
     begin
     end
@@ -547,6 +587,7 @@ mylstar_board mylstar_board
   .IP1710(IP1710),
   .IP4740(IP4740),
   .IPA1J2(IPA1J2),
+  .IPA1J2_Y(IPA1J2_Y),
   .OP2720(OP2720),
   .OP3337(),
 
@@ -557,6 +598,8 @@ mylstar_board mylstar_board
   .rom_init_data(ioctl_dout),
   .rom_index(ioctl_index),
   
+  .reactor(reactor_r),
+
   .vflip(status[11]),
   .hflip(1'b0)
 );
@@ -588,7 +631,7 @@ end
 
 
 wire rotate_ccw = ~status[11];
-wire no_rotate = status[5] | (mod==mod_tylz) | (mod==mod_insector) | direct_video;
+wire no_rotate = status[5] | (mod==mod_tylz) | (mod==mod_insector) | (mod==mod_reactor) | direct_video;
 //wire scandoubler = (status[17:15] || forced_scandoubler);
 wire flip = 0;
 wire video_rotated;

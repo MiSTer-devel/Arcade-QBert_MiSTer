@@ -91,11 +91,12 @@ always @(posedge clk)
 
 always @(posedge clk)
     stb <= ~U4_O[2] & WE;
-	 
-sc01a #(.CLK_HZ(50_000_000), .ENABLE_RESAMPLER(0)) U14(
+
+VotraxSound #(.CLK_HZ(50_000_000)) U14(
+
     .clk(clk_sys),
     .reset_n(~reset),
-    .p(~DBo[5:0]),
+    .phoneme(~DBo[5:0]),
     .inflection(inflection_reg),
     .stb(stb),
     .ar(U14_AR),
@@ -115,7 +116,7 @@ riot U15(
   .A(AB[6:0]),
   .D_I(DBo),
   .D_O(U15_D_O),
-  .PA_I({ &IP2720[3:0], 1'b0, ~IP2720 }),
+  .PA_I({ ~&IP2720[3:0], 1'b0, ~IP2720 }),
   .PA_O(),
   .DDRA_O(),
   .PB_I({ ~U14_AR, 1'b1, ~SB1[5:0] }),
