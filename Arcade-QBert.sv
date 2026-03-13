@@ -216,6 +216,7 @@ localparam CONF_STR = {
   "O6,Test mode,Off,On;",
   "O7,Original column bug,Off,On;",
   "OA,Diagonal joystick,Off,On;",
+  "OCD,Trackball speed,25%,50%,100%;",
   "-;",
   "DIP;",
   "-;",
@@ -244,7 +245,8 @@ wire [15:0] joystick_0;
 wire [15:0] joystick_1;
 wire [15:0] joystick_analog_0;
 
-wire [8:0] spinner_0;
+wire [8:0]  spinner_0;
+wire [24:0] ps2_mouse;
 
 hps_io #(.CONF_STR(CONF_STR)) hps_io
 (
@@ -263,6 +265,7 @@ hps_io #(.CONF_STR(CONF_STR)) hps_io
   .status_menumask({direct_video}),
 
   .ps2_key(ps2_key),
+  .ps2_mouse(ps2_mouse),
 
   .ioctl_download(ioctl_download),
   .ioctl_wr(ioctl_wr),
@@ -273,7 +276,7 @@ hps_io #(.CONF_STR(CONF_STR)) hps_io
 
   .joystick_0(joystick_0),
   .joystick_1(joystick_1),
-  
+
   .joystick_l_analog_0(joystick_analog_0),
   .spinner_0(spinner_0)
 );
@@ -337,6 +340,55 @@ wire reset = RESET | status[0] | buttons[1];
 
 //////////////////////////////////////////////////////////////////
 
+// Reactor trackball: accumulate mouse deltas into 8-bit counters.
+// The game reads IPA1J2/IPA1J2_Y as the delta since the last analog_reset
+// (write to 0x7001), so we zero the counters on each analog_reset pulse.
+// Joystick D-pad also feeds the counters at VBlank rate as fallback.
+reg        ps2_strobe_r;
+reg [7:0]  trackball_x;
+reg [7:0]  trackball_y;
+reg        vblank_r;
+wire       analog_rst_n;  // from mylstar_board: low during write to 0x7001
+reg        analog_rst_r;
+
+// Trackball speed scaling (status[13:12]): 50% / 100% / 200% / 400%
+// Arithmetic right-shift preserves sign for 50%; left-shift wraps for 200/400%
+// which is fine since the 8-bit counter wraps anyway.
+wire signed [7:0] tb_raw_x =  $signed(ps2_mouse[15:8]);
+wire signed [7:0] tb_raw_y = -$signed(ps2_mouse[23:16]); // invert: PS/2 up = game -Y
+wire signed [7:0] tb_dx = (status[13:12] == 2'd0) ? tb_raw_x >>> 2 :  // 25%
+                           (status[13:12] == 2'd1) ? tb_raw_x >>> 1 :  // 50%
+                           tb_raw_x;                                     // 100% (2 and 3)
+wire signed [7:0] tb_dy = (status[13:12] == 2'd0) ? tb_raw_y >>> 2 :  // 25%
+                           (status[13:12] == 2'd1) ? tb_raw_y >>> 1 :  // 50%
+                           tb_raw_y;                                     // 100% (2 and 3)
+
+always @(posedge clk_sys) begin
+  ps2_strobe_r <= ps2_mouse[24];
+  vblank_r     <= VBlank;
+  analog_rst_r <= analog_rst_n;
+  if (reset) begin
+    trackball_x  <= 8'd0;
+    trackball_y  <= 8'd0;
+  end else if (reactor_r && !analog_rst_n && analog_rst_r) begin
+    // Falling edge of analog_rst_n = game wrote to 0x7001 → reset counters
+    trackball_x <= 8'd0;
+    trackball_y <= 8'd0;
+  end else if (ps2_mouse[24] != ps2_strobe_r) begin
+    // New mouse/trackball packet: accumulate scaled X/Y deltas.
+    trackball_x <= trackball_x + 8'(tb_dx);
+    trackball_y <= trackball_y + 8'(tb_dy);
+  end else if (VBlank && !vblank_r) begin
+    // D-pad fallback at VBlank rate (~60 Hz)
+    if      (joystick_0[0]) trackball_x <= trackball_x + 8'd4;
+    else if (joystick_0[1]) trackball_x <= trackball_x - 8'd4;
+    if      (joystick_0[2]) trackball_y <= trackball_y + 8'd4;
+    else if (joystick_0[3]) trackball_y <= trackball_y - 8'd4;
+  end
+end
+
+//////////////////////////////////////////////////////////////////
+
 // read dip switches
 
 reg [7:0] sw[8];
@@ -354,19 +406,26 @@ localparam mod_krull    = 3;
 localparam mod_curvebal = 4;
 localparam mod_tylz = 5;
 localparam mod_insector = 6;
+localparam mod_reactor = 7;
 
 reg [7:0] mod = 255;
 always @(posedge clk_25) if (ioctl_wr & (ioctl_index==1)) mod <= ioctl_dout;
+
+// Register reactor flag to break potential long combinatorial path
+reg reactor_r;
+always @(posedge clk_sys) reactor_r <= (mod == mod_reactor);
 
 
 wire [7:0] IP1710;
 wire [7:0] IP4740;
 wire [7:0] IPA1J2;
+reg  [7:0] IPA1J2_Y;
 
 
 always @(*) begin
 
-  IPA1J2 <= 8'd0;
+  IPA1J2   <= 8'd0;
+  IPA1J2_Y <= 8'd0;
 
   IP1710 <= {
     joystick_0[4], // test 1
@@ -514,6 +573,34 @@ always @(*) begin
         joystick_0[3]
       };
     end
+    mod_reactor:
+    begin
+      IP1710 <= { // IN1: service inputs
+        4'b0,
+        joystick_0[7], // coin 1
+        1'b0,
+        ~status[6],       // service DIP (active-low): OSD Test mode enters service mode
+        joystick_0[4]     // test button (active-high per MAME IN1 bit0 IP_ACTIVE_HIGH): fire/"Service Select"
+      };
+
+      // IN2: trackball H (game X = right/left)
+      // trackball_x is an 8-bit counter accumulated from mouse/trackball or D-pad.
+      IPA1J2 <= trackball_x;
+
+      // IN3: trackball V (game Y = up/down)
+      IPA1J2_Y <= trackball_y;
+
+      IP4740 <= { // IN4: buttons and start
+        2'b0,
+        joystick_0[6],                          // coin 2
+        joystick_0[7],                          // coin 1 (also in IP1710)
+        joystick_0[4] | ps2_mouse[0],           // button 1 (fire) + trackball left
+        joystick_0[5] | ps2_mouse[1],           // button 2        + trackball right
+        joystick_0[6],                          // start 2P
+        joystick_0[5] | ps2_mouse[0]            // start 1P        + trackball left
+      };
+    end
+
     default:
     begin
     end
@@ -547,6 +634,8 @@ mylstar_board mylstar_board
   .IP1710(IP1710),
   .IP4740(IP4740),
   .IPA1J2(IPA1J2),
+  .IPA1J2_Y(IPA1J2_Y),
+  .analog_rst_n(analog_rst_n),
   .OP2720(OP2720),
   .OP3337(),
 
@@ -557,6 +646,8 @@ mylstar_board mylstar_board
   .rom_init_data(ioctl_dout),
   .rom_index(ioctl_index),
   
+  .reactor(reactor_r),
+
   .vflip(status[11]),
   .hflip(1'b0)
 );
@@ -588,7 +679,7 @@ end
 
 
 wire rotate_ccw = ~status[11];
-wire no_rotate = status[5] | (mod==mod_tylz) | (mod==mod_insector) | direct_video;
+wire no_rotate = status[5] | (mod==mod_tylz) | (mod==mod_insector) | (mod==mod_reactor) | direct_video;
 //wire scandoubler = (status[17:15] || forced_scandoubler);
 wire flip = 0;
 wire video_rotated;
