@@ -21,6 +21,8 @@ module mylstar_board
   input   [7:0] IP1710,
   input   [7:0] IP4740,
   input   [7:0] IPA1J2,
+  input   [7:0] IPA1J2_Y,
+  output         analog_rst_n,  // active-low pulse on write to 0x7001 (trackball base reset)
   output  [5:0] OP2720,
   output  [4:0] OP3337,
   output  [7:0] OP4740,
@@ -31,11 +33,15 @@ module mylstar_board
   input [17:0] rom_init_address,
   input [7:0] rom_init_data,
   input [7:0] rom_index,
-  
+
+  input reactor,
+
   input vflip,
   input hflip
 );
 
+reg reactor_s;
+always @(posedge clk_sys) reactor_s <= reactor;
 
 assign VSync = K15_4;
 assign HSync = K17_Q[0];
@@ -47,6 +53,7 @@ assign blue = { G14_Q, 4'd0 };
 assign OP2720 = A10[5:0];
 assign OP4740 = A9[7:0];
 assign OP3337 = A8[4:0];
+assign analog_rst_n = B9_Y[1];  // low during write to 0x7001 (analog/trackball reset)
 
 wire IOM;
 wire RD_n, WR_n;
@@ -76,17 +83,22 @@ wire L4_5_Q, L5_6_Q, L6_7_Q, L7_8_Q;
 wire [3:0] K9_Y, K10_Y, K11_Y, G12_Y, G13_Q, G14_Q, G15_Q;
 wire [7:0] E7_Q, E8_Ao, E8_Bo, E9_10_Bo, E10_11_Q, D11_Q, D12_Y, E11_12_Q, E13_Q;
 
-wire nCOLSEL = B7_2Y[2];
+// Reactor: COLSEL at 0x6000 (B8_Y[3]=0 && addr[12]=0), Q'bert: 0x5000 (B7_2Y[2])
+wire nCOLSEL = reactor_s ? (B8_Y[3] | addr[12]) : B7_2Y[2];
 wire nBOJRSEL1 = B5_3;
 wire nBOJRWR = F6_8;
-wire nBRSEL = B6_Y[7];
-wire nFRSEL = B6_Y[6];
+// Reactor: BRSEL at 0x3000 (B6_Y[6]), Q'bert: 0x3800 (B6_Y[7])
+wire nBRSEL = reactor_s ? B6_Y[6] : B6_Y[7];
+// Reactor: FRSEL at 0x2000 (B6_Y[4]), Q'bert: 0x3000 (B6_Y[6])
+wire nFRSEL = reactor_s ? B6_Y[4] : B6_Y[6];
 wire nWR = B4_Y[0];
 wire nBRWR = F6_6;
 wire nFRWR = F6_3;
 wire BANK_SEL = A8[4];
-wire VERTFLOP = vflip ? ~A8[2]: A8[2];
-wire HORIZFLIP = hflip ? ~A8[1]: A8[1];
+// Reactor: suppress game-controlled flip bits — the death animation sets these
+// but the asymmetric hardware flip causes display corruption (column swap).
+wire VERTFLOP = vflip ? ~(A8[2] & ~reactor_s) : (A8[2] & ~reactor_s);
+wire HORIZFLIP = hflip ? ~(A8[1] & ~reactor_s) : (A8[1] & ~reactor_s);
 wire FB_PRIORITY = A8[0];
 wire BLANK = J12_1;
 wire HBLANK = K17_Q[0];
@@ -116,11 +128,12 @@ wire nVV0 = K15_10;
 wire [7:0] P1_B11 = IP1710;
 wire [7:0] P1_B14 = IP4740;
 
-wire [7:0] A1J2 = ~B10_Y[2] ? IPA1J2 : 8'd0;  
+wire [7:0] A1J2   = ~B10_Y[2] ? IPA1J2   : 8'd0;
+wire [7:0] A1J2_Y = ~B10_Y[3] ? IPA1J2_Y : 8'd0;
 
 wire [7:0] ram_dout = C5_Q | C6_Q | C7_Q | C9_10_Q | C8_9_Q | C10_11_Q;
 wire [7:0] rom_dout = C11_12_Q | C12_13_Q | C13_14_Q | C14_15_Q | C16_Q;
-wire [7:0] cpu_din = ram_dout | rom_dout | G10_Ao | B11 | B12 | B14 | E8_Ao;
+wire [7:0] cpu_din = ram_dout | rom_dout | G10_Ao | B11 | B12 | B14 | A1J2 | A1J2_Y | E8_Ao;
 
 // A8
 always @(posedge nWR)
@@ -193,17 +206,24 @@ x74138 B8(
   .O(B8_Y)
 );
 
+// Reactor: IO at 0x7000 (B8_Y[3]=0 && addr[12]=1), Q'bert: 0x5800 (B7_2Y[3])
+wire io_sel = reactor_s ? (B8_Y[3] | ~addr[12]) : B7_2Y[3];
+
+// Reactor: MAME documents mirror(0x0ff8) for all I/O ports, meaning addr[3] is
+// a don't-care in the original hardware decoder. Use G1=1 for Reactor so that
+// mirrored writes (e.g. 0x700B) correctly reach the output register (A8),
+// allowing the game to restore flip=0 after the death animation.
 x74138 B9(
-  .G1(~addr[3]),
-  .G2A(B7_2Y[3]),
+  .G1(reactor_s ? 1'b1 : ~addr[3]),
+  .G2A(io_sel),
   .G2B(B4_Y[0]),
   .A(addr[2:0]),
   .O(B9_Y)
 );
 
 x74138 B10(
-  .G1(~addr[3]),
-  .G2A(B7_2Y[3]),
+  .G1(reactor_s ? 1'b1 : ~addr[3]),
+  .G2A(io_sel),
   .G2B(nRD1),
   .A(addr[2:0]),
   .O(B10_Y)
@@ -473,6 +493,9 @@ dpram #(.addr_width(10),.data_width(8)) E10_11(
 
 reg [12:0] E11_12_addr;
 always @(posedge clk_sys) E11_12_addr <= { L10_Q1, D11_Q|D12_Y, D13_Y };
+// For Reactor: charram (0x4000-0x4FFF) is CPU-writable tile RAM (init_ramtiles).
+// For Q'bert: E11_12 is ROM-loaded BG tiles, not CPU-writable.
+wire e11_12_cpu_we = reactor_s & ~nBOJRSEL1 & ~nWR;
 dpram  #(.addr_width(13),.data_width(8)) E11_12 (
   .clk(clk_sys),
   .addr(E11_12_addr),
@@ -480,9 +503,9 @@ dpram  #(.addr_width(13),.data_width(8)) E11_12 (
   .ce(1'b0),
   //.ce(L10_Q1),
   .oe(1'b0),
-  .we(rom_init & rom_init_address < 18'h2000),
-  .waddr(rom_init_address),
-  .wdata(rom_init_data)
+  .we(rom_init ? (rom_init_address < 18'h2000) : e11_12_cpu_we),
+  .waddr(rom_init ? rom_init_address[12:0] : addr[12:0]),
+  .wdata(rom_init ? rom_init_data : cpu_dout)
 );
 
 // E15
